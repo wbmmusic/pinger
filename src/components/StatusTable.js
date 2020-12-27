@@ -130,7 +130,7 @@ export default function StatusTable() {
 
     return (
         <Fragment>
-            <Table size="sm" striped>
+            <Table size="sm" hover style={{ userSelect: 'none' }} >
                 <thead>
                     <tr>
                         <th>Name</th>

@@ -89,6 +89,7 @@ const mainInit = () => {
     hosts = tempDevices
     win.webContents.send('devices', hosts)
   }
+
   ipcMain.on('getDevices', () => {
     console.log('Got Request For Devices')
     win.webContents.send('devices', hosts)
@@ -149,21 +150,27 @@ const mainInit = () => {
     pingEm()
   })
 
+  ipcMain.on('pingAll', () => {
+    console.log('Got a ping all')
+    pingEm()
+  })
+
   const pingEm = () => {
+    console.log('Pinging all')
     hosts.forEach(function (host) {
       ping.sys.probe(host.address, function (isAlive) {
         const rightNow = new Date();
         const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
 
         if (isAlive) {
-          console.log(now + ' host ' + host.name + ' at ' + host.address + ' is alive')
+          //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is alive')
           let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
           hosts[theIndex].lastGood = now
           hosts[theIndex].lastChecked = now
           hosts[theIndex].status = 'ALIVE'
           win.webContents.send('devices', hosts)
         } else {
-          console.log(now + ' host ' + host.name + ' at ' + host.address + ' is dead')
+          //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is dead')
           let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
           hosts[theIndex].lastChecked = now
           hosts[theIndex].status = 'DEAD'

@@ -67,6 +67,10 @@ export default function Top() {
         setNewDeviceModal(defaultNewDeviceModal)
     }
 
+    const pingAll = () => {
+        ipcRenderer.send('pingAll')
+    }
+
     return (
         <Fragment>
             <Navbar bg="light" expand="sm" >
@@ -75,9 +79,9 @@ export default function Top() {
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
                         <NavDropdown title="Devices" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={() => console.log('Ping All')}>Ping All</NavDropdown.Item>
+                            <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
                             <NavDropdown.Divider />
-                            <NavDropdown.Item onClick={() => addDevice()}>Add Device</NavDropdown.Item>
+                            <NavDropdown.Item onClick={addDevice}>Add Device</NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
                 </Navbar.Collapse>
