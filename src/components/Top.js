@@ -13,7 +13,12 @@ export default function Top() {
         frequency: 10,
         trys: 3
     }
+
+    const defaultEmailSettingsModal = {
+        show: false
+    }
     const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal)
+    const [emailSettingsModal, setEmailSettingsModal] = useState(defaultEmailSettingsModal)
 
     const addDevice = () => {
         //console.log('Add Device')
@@ -71,6 +76,17 @@ export default function Top() {
         ipcRenderer.send('pingAll')
     }
 
+    const emailSettings = () => {
+        console.log('EMAIL Settings')
+        let tempEmailSettingsModal = { ...defaultEmailSettingsModal }
+        tempEmailSettingsModal.show = true
+        setEmailSettingsModal(tempEmailSettingsModal)
+    }
+
+    const closeEmailModal = () => {
+        setEmailSettingsModal(defaultEmailSettingsModal)
+    }
+
     return (
         <Fragment>
             <Navbar bg="light" expand="sm" >
@@ -82,6 +98,9 @@ export default function Top() {
                             <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
                             <NavDropdown.Divider />
                             <NavDropdown.Item onClick={addDevice}>Add Device</NavDropdown.Item>
+                        </NavDropdown>
+                        <NavDropdown title="Configure" id="basic-nav-dropdown">
+                            <NavDropdown.Item onClick={emailSettings}>Email Settings</NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
                 </Navbar.Collapse>
@@ -151,7 +170,74 @@ export default function Top() {
                         <Button size="sm" variant="primary" onClick={() => createDevice()}>Add Device</Button>
                     </Modal.Footer>
                 </Modal>
+                <Modal
+                    show={emailSettingsModal.show}
+                    onHide={closeEmailModal}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Email Settings</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Table borderless size="sm">
+                            <thead>
+                                <tr>
+                                    <th colSpan="2">Send Email From</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style={labelStyle}>Provider:</td>
+                                    <td>
+                                        <select>
+                                            <option>Hotmail / Outlook</option>
+                                            <option>Gmail</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={labelStyle}>Email:</td>
+                                    <td><input style={{ width: '100%' }} type="text" /></td>
+                                </tr>
+                                <tr>
+                                    <td style={labelStyle}>Password:</td>
+                                    <td>
+                                        <input style={{ width: '90%' }} type="password" />
+                                        <div style={{ display: 'inline-block', cursor: 'pointer', marginLeft: '5px' }}>👁️</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <thead>
+                                <tr>
+                                    <th colSpan="2">Send Email To</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style={labelStyle}>Address/s:</td>
+                                    <td>
+                                        <textarea style={{ fontSize: '12px', width: '100%', minHeight: '100px' }} />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td style={{ textAlign: 'center', fontSize: '12px' }}>Each address should be separated with a coma. <br /> myemail@outlook.com, youremail@yahoo.com </td>
+                                </tr>
+                            </tbody>
+                        </Table>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button size="sm" variant="secondary" onClick={closeEmailModal}>Close</Button>
+                        <Button size="sm" variant="primary">Save Settings</Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         </Fragment>
     )
+}
+
+const labelStyle = {
+    textAlign: 'right',
+    width: '1px'
 }

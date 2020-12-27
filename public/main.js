@@ -10,16 +10,13 @@ const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 
 let firstReactInit = true
-
+const isMac = process.platform === 'darwin'
 var hosts = [];
 
-const isMac = process.platform === 'darwin'
-
+let pathToConfig
 const emptyConfig = {
   devices: []
 }
-
-let pathToConfig
 
 if (isMac) {
 
@@ -84,15 +81,15 @@ const mainInit = () => {
   const getFile = () => {
     console.log('Get File')
     let file = JSON.parse(fs.readFileSync(pathToConfig))
-    console.log(file)
+    //console.log(file)
     return file
   }
 
   const saveFile = (fileData) => {
     console.log('Save File')
-    console.log(fileData)
+    //console.log(fileData)
     let file = fs.writeFileSync(pathToConfig, JSON.stringify(fileData))
-    console.log(file)
+    //console.log(file)
     return file
   }
 
