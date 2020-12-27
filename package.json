@@ -1,6 +1,6 @@
 {
     "name": "nubar-ping",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "private": true,
     "dependencies": {
         "@testing-library/jest-dom": "^5.11.4",
@@ -69,9 +69,6 @@
             "electron/*"
         ],
         "win": {
-            "extraResources": [
-                "pingConfig.json"
-            ],
             "icon": "public/favicon.ico"
         }
     },

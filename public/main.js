@@ -13,9 +13,29 @@ let firstReactInit = true
 
 var hosts = [];
 
-let pathToConfig = path.join(__dirname, '..', 'pingConfig.json')
-if (app.isPackaged) {
-  pathToConfig = path.join(process.resourcesPath, 'pingConfig.json')
+const isMac = process.platform === 'darwin'
+
+const emptyConfig = {
+  devices: []
+}
+
+let pathToConfig
+
+if (isMac) {
+
+} else {
+  pathToConfig = path.join('C:', 'ProgramData', 'WBM Tek', 'nubarPing', 'pingConfig.json')
+  if (!fs.existsSync(pathToConfig)) {
+    console.log('DOESN\'T EXIST')
+    if (fs.existsSync(path.join('C:', 'ProgramData'))) {
+      fs.mkdirSync(path.join('C:', 'ProgramData', 'WBM Tek', 'nubarPing'), { recursive: true })
+      fs.writeFileSync(pathToConfig, JSON.stringify(emptyConfig))
+    } else {
+      console.log('NO PROGRAMDATA FOLDER')
+    }
+  } else {
+    console.log('FOUND CONFIG FILE')
+  }
 }
 
 ////////////////// App Startup ///////////////////////////////////////////////////////////////////
