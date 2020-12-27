@@ -1,0 +1,76 @@
+{
+    "name": "nubar-ping",
+    "version": "0.0.0",
+    "private": true,
+    "dependencies": {
+        "@testing-library/jest-dom": "^5.11.4",
+        "@testing-library/react": "^11.1.0",
+        "@testing-library/user-event": "^12.1.10",
+        "bootstrap": "^4.5.3",
+        "date-and-time": "^0.14.2",
+        "electron-updater": "^4.3.5",
+        "foreman": "^3.0.1",
+        "ping": "^0.4.0",
+        "react": "^17.0.1",
+        "react-bootstrap": "^1.4.0",
+        "react-dom": "^17.0.1",
+        "react-scripts": "4.0.1",
+        "uuid": "^8.3.2",
+        "web-vitals": "^0.2.4"
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject",
+        "dev": "nf start",
+        "install": "electron-rebuild",
+        "package": "electron-builder build -c.extraMetadata.main=build/main.js --publish never",
+        "deploy": "electron-builder build -c.extraMetadata.main=build/main.js --publish always",
+        "upload": "yarn build && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && yarn deploy ",
+        "electron": "electron .",
+        "try": "yarn build && yarn package "
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ]
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    },
+    "devDependencies": {
+        "electron": "^11.1.1",
+        "electron-builder": "^22.9.1",
+        "electron-rebuild": "^2.3.4"
+    },
+    "author": "Marece Williams",
+    "description": "Enter a description",
+    "homepage": "./",
+    "main": "public/main.js",
+    "build": {
+        "productName": "nubar-ping",
+        "appId": "com.wbm.nubar-ping",
+        "electronVersion": "11.1.1",
+        "copyright": "WBM Tek",
+        "extends": null,
+        "files": [
+            "build/**/*",
+            "electron/*"
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/wbmmusic/???????.git"
+    }
+}
