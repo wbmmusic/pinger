@@ -67,7 +67,12 @@
         "files": [
             "build/**/*",
             "electron/*"
-        ]
+        ],
+        "win": {
+            "extraResources": [
+                "pingConfig.json"
+            ]
+        }
     },
     "repository": {
         "type": "git",
