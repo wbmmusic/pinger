@@ -148,6 +148,7 @@ const mainInit = () => {
     saveFile(tempFile)
     pingEm()
   })
+
   const pingEm = () => {
     hosts.forEach(function (host) {
       ping.sys.probe(host.address, function (isAlive) {
@@ -160,15 +161,16 @@ const mainInit = () => {
           hosts[theIndex].lastGood = now
           hosts[theIndex].lastChecked = now
           hosts[theIndex].status = 'ALIVE'
+          win.webContents.send('devices', hosts)
         } else {
           console.log(now + ' host ' + host.name + ' at ' + host.address + ' is dead')
           let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
           hosts[theIndex].lastChecked = now
           hosts[theIndex].status = 'DEAD'
+          win.webContents.send('devices', hosts)
         }
       });
     });
-    win.webContents.send('devices', hosts)
   }
 
   setInterval(() => {
