@@ -1,8 +1,11 @@
 
-import React, { useState, Fragment } from 'react'
-import { Button, Modal, Nav, Navbar, NavDropdown, Table } from 'react-bootstrap'
+import React, { useState, Fragment, useEffect } from 'react'
+import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Spinner, Table } from 'react-bootstrap'
 import StatusTable from './StatusTable'
 const { ipcRenderer } = window.require('electron')
+
+const Cryptr = require('cryptr');
+const cryptr = new Cryptr('myTotalySecretKey');
 
 export default function Top() {
     const defaultNewDeviceModal = {
@@ -13,12 +16,57 @@ export default function Top() {
         frequency: 10,
         trys: 3
     }
-
     const defaultEmailSettingsModal = {
-        show: false
+        show: false,
+        provider: '',
+        email: '',
+        password: '',
+        newAddress: '',
+        save: false,
+        addresses: [],
+        processing: false
     }
     const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal)
     const [emailSettingsModal, setEmailSettingsModal] = useState(defaultEmailSettingsModal)
+    const [processingModal, setProcessingModal] = useState(false)
+
+    useEffect(() => {
+        ipcRenderer.on('emailSettings', (e, emailSettings) => {
+            let tempEmailSettings = { ...emailSettingsModal }
+            tempEmailSettings.show = true
+            tempEmailSettings.provider = emailSettings.provider
+            tempEmailSettings.email = emailSettings.email
+            tempEmailSettings.password = cryptr.decrypt(emailSettings.password)
+            tempEmailSettings.addresses = emailSettings.addresses
+            setProcessingModal(false)
+            setEmailSettingsModal(tempEmailSettings)
+        })
+
+        ipcRenderer.on('emailUpdated', () => {
+            setProcessingModal(false)
+        })
+
+        return () => {
+            ipcRenderer.removeAllListeners('emailSettings')
+            ipcRenderer.removeAllListeners('emailUpdated')
+        }
+    }, [])
+
+    useEffect(() => {
+        setTimeout(() => {
+            if (emailSettingsModal.save === true) {
+                let thePass = cryptr.encrypt(emailSettingsModal.password)
+                ipcRenderer.send('updateEmail', {
+                    provider: emailSettingsModal.provider,
+                    email: emailSettingsModal.email,
+                    password: thePass,
+                    addresses: emailSettingsModal.addresses
+                })
+                closeEmailModal()
+            }
+        }, 100);
+
+    }, [emailSettingsModal])
 
     const addDevice = () => {
         //console.log('Add Device')
@@ -76,15 +124,50 @@ export default function Top() {
         ipcRenderer.send('pingAll')
     }
 
-    const emailSettings = () => {
-        console.log('EMAIL Settings')
-        let tempEmailSettingsModal = { ...defaultEmailSettingsModal }
-        tempEmailSettingsModal.show = true
+    const changePassword = (pass) => {
+        let tempEmailSettingsModal = { ...emailSettingsModal }
+        tempEmailSettingsModal.password = pass
         setEmailSettingsModal(tempEmailSettingsModal)
+    }
+
+    const changeEmail = (email) => {
+        let tempEmailSettingsModal = { ...emailSettingsModal }
+        tempEmailSettingsModal.email = email
+        setEmailSettingsModal(tempEmailSettingsModal)
+    }
+
+    const emailSettings = () => {
+        let tempX = { ...emailSettingsModal }
+        tempX.save = false
+        tempX.show = false
+        tempX.processing = true
+        setEmailSettingsModal(tempX)
+        ipcRenderer.send('getEmailSettings')
     }
 
     const closeEmailModal = () => {
         setEmailSettingsModal(defaultEmailSettingsModal)
+    }
+
+    const handleNewAddress = (theNewAddress) => {
+        let tempEmailSettingsModal = { ...emailSettingsModal }
+        tempEmailSettingsModal.newAddress = theNewAddress
+        setEmailSettingsModal(tempEmailSettingsModal)
+    }
+
+    const handleUpdateEmailSettings = () => {
+        let tempX = { ...emailSettingsModal }
+        tempX.save = true
+        tempX.show = false
+        tempX.processing = true
+        setEmailSettingsModal(tempX)
+        console.log('Handle Update Email Setting')
+    }
+
+    const hideProcessingModal = () => {
+        let tempEmailSettingsModal = { ...emailSettingsModal }
+        tempEmailSettingsModal.processing = false
+        setEmailSettingsModal(tempEmailSettingsModal)
     }
 
     return (
@@ -94,13 +177,13 @@ export default function Top() {
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
+                        <NavDropdown title="Configure" id="basic-nav-dropdown">
+                            <NavDropdown.Item onClick={emailSettings}>Email Settings</NavDropdown.Item>
+                        </NavDropdown>
                         <NavDropdown title="Devices" id="basic-nav-dropdown">
                             <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
                             <NavDropdown.Divider />
                             <NavDropdown.Item onClick={addDevice}>Add Device</NavDropdown.Item>
-                        </NavDropdown>
-                        <NavDropdown title="Configure" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={emailSettings}>Email Settings</NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
                 </Navbar.Collapse>
@@ -198,13 +281,31 @@ export default function Top() {
                                 </tr>
                                 <tr>
                                     <td style={labelStyle}>Email:</td>
-                                    <td><input style={{ width: '100%' }} type="text" /></td>
+                                    <td>
+                                        <FormControl
+                                            size="sm"
+                                            placeholder="Email Address"
+                                            aria-label="Email Address"
+                                            aria-describedby="basic-addon2"
+                                            type="email"
+                                            onChange={(e) => changeEmail(e.target.value)}
+                                            value={emailSettingsModal.email}
+                                        />
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td style={labelStyle}>Password:</td>
                                     <td>
-                                        <input style={{ width: '90%' }} type="password" />
-                                        <div style={{ display: 'inline-block', cursor: 'pointer', marginLeft: '5px' }}>👁️</div>
+                                        <FormControl
+                                            size="sm"
+                                            placeholder="Email Account Password"
+                                            aria-label="Email Account Password"
+                                            aria-describedby="basic-addon2"
+                                            type="password"
+                                            onChange={(e) => changePassword(e.target.value)}
+                                            value={emailSettingsModal.password}
+                                        />
+
                                     </td>
                                 </tr>
                             </tbody>
@@ -217,20 +318,72 @@ export default function Top() {
                                 <tr>
                                     <td style={labelStyle}>Address/s:</td>
                                     <td>
-                                        <textarea style={{ fontSize: '12px', width: '100%', minHeight: '100px' }} />
+                                        <div>
+                                            <Form onSubmit={(e) => {
+                                                e.preventDefault()
+                                                let tempEmailSettingsModal = { ...emailSettingsModal }
+                                                tempEmailSettingsModal.addresses.push(tempEmailSettingsModal.newAddress)
+                                                tempEmailSettingsModal.newAddress = ''
+                                                setEmailSettingsModal(tempEmailSettingsModal)
+                                            }}>
+                                                <InputGroup className="mb-3">
+                                                    <FormControl
+                                                        size="sm"
+                                                        placeholder="Add Recipient Email"
+                                                        aria-label="Add Recipient Email"
+                                                        aria-describedby="basic-addon2"
+                                                        type="email"
+                                                        onChange={(e) => handleNewAddress(e.target.value)}
+                                                        value={emailSettingsModal.newAddress}
+                                                    />
+                                                    <InputGroup.Append>
+                                                        <Button size="sm" type="submit" variant="outline-primary">➕</Button>
+                                                    </InputGroup.Append>
+                                                </InputGroup>
+                                            </Form>
+                                        </div>
+                                        <div>
+                                            {emailSettingsModal.addresses.map(usr => (
+                                                <div
+                                                    style={{
+                                                        display: 'inline-block',
+                                                        fontSize: '12px',
+                                                        backgroundColor: 'lightgray',
+                                                        padding: '2px',
+                                                        marginRight: '3px',
+                                                        marginBottom: '1px',
+                                                        userSelect: 'none'
+                                                    }}
+                                                >
+                                                    {usr}
+                                                    <div style={{ display: 'inline-block', fontSize: '10px', marginLeft: '4px', cursor: 'pointer' }}>
+                                                        ✖️
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td style={{ textAlign: 'center', fontSize: '12px' }}>Each address should be separated with a coma. <br /> myemail@outlook.com, youremail@yahoo.com </td>
                                 </tr>
                             </tbody>
                         </Table>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button size="sm" variant="secondary" onClick={closeEmailModal}>Close</Button>
-                        <Button size="sm" variant="primary">Save Settings</Button>
+                        <Button size="sm" variant="primary" onClick={() => handleUpdateEmailSettings()}>Save Settings</Button>
                     </Modal.Footer>
+                </Modal>
+                <Modal
+                    show={emailSettingsModal.processing}
+                    onHide={hideProcessingModal}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>Processing</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Spinner size="xl" animation="border" />
+                    </Modal.Body>
                 </Modal>
             </div>
         </Fragment>

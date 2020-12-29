@@ -13,7 +13,7 @@ export default function StatusTable() {
 
     useEffect(() => {
         ipcRenderer.on('devices', (e, theDevices) => {
-            console.log(theDevices)
+            //console.log(theDevices)
             setDevices(theDevices)
         })
 
@@ -109,7 +109,7 @@ export default function StatusTable() {
                     <td style={styles}>{devices[i].status}</td>
                     <td style={styles}>{devices[i].lastChecked}</td>
                     <td style={styles}>{devices[i].lastGood}</td>
-                    <td style={styles}><button onClick={() => console.log('Ping ' + devices[i].id)} size="sm">Ping</button></td>
+                    <td style={styles}><button onClick={() => ipcRenderer.send('pingOne', devices[i])} size="sm">Ping</button></td>
                     <td style={styles}>
                         <div
                             style={{ display: 'inline-block', cursor: 'pointer' }}

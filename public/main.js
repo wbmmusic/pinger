@@ -6,16 +6,25 @@ const { v4: uuid } = require('uuid');
 var ping = require('ping');
 const date = require('date-and-time');
 const fs = require('fs');
+const nodemailer = require("nodemailer");
 
 const { autoUpdater } = require('electron-updater');
 
 let firstReactInit = true
 const isMac = process.platform === 'darwin'
 var hosts = [];
+var emailInfo;
+var timers = []
 
 let pathToConfig
 const emptyConfig = {
-  devices: []
+  devices: [],
+  email: {
+    provider: '',
+    email: '',
+    password: '',
+    addresses: []
+  }
 }
 
 if (isMac) {
@@ -93,18 +102,35 @@ const mainInit = () => {
     return file
   }
 
+  const makeTimers = () => {
+    hosts.forEach(host => {
+      let timerIndex = timers.findIndex(tmr => tmr.id === host.id)
+      if (timerIndex === -1) {
+        timers.push({
+          id: host.id,
+          timer: null
+        })
+      }
+    })
+  }
+
   const makeDevices = () => {
     console.log('Make Devices')
-    let tempDevices = getFile().devices
+    hosts = getFile().devices
 
-    for (let i = 0; i < tempDevices.length; i++) {
-      tempDevices[i].status = 'PENDING'
-      tempDevices[i].lastChecked = null
-      tempDevices[i].lastGood = null
+    for (let i = 0; i < hosts.length; i++) {
+      hosts[i].status = 'PENDING'
+      hosts[i].lastChecked = null
+      hosts[i].lastGood = null
+      hosts[i].alarm = false
+      hosts[i].misses = 0
     }
-
-    hosts = tempDevices
     win.webContents.send('devices', hosts)
+    makeTimers();
+  }
+
+  const makeEmail = () => {
+    emailInfo = getFile().email
   }
 
   ipcMain.on('getDevices', () => {
@@ -127,9 +153,16 @@ const mainInit = () => {
     let index2 = hosts.findIndex(dev => dev.id === updatedDevice.id)
     tempFile.devices[index] = updatedInfo
     saveFile(tempFile)
-    hosts[index2] = Object.assign(hosts[index2], { ...updatedInfo, status: 'PENDING' })
+    hosts[index2] = Object.assign(hosts[index2], {
+      ...updatedInfo,
+      status: 'PENDING',
+      lastChecked: null,
+      lastGood: null,
+      alarm: false,
+      misses: 0
+    })
     win.webContents.send('devices', hosts)
-    pingEm()
+    pingOne(updatedDevice)
   })
 
   ipcMain.on('deleteDevice', (e, deviceID) => {
@@ -138,6 +171,9 @@ const mainInit = () => {
     let tempFile = getFile()
     let index = tempFile.devices.findIndex(dev => dev.id === deviceID)
     let index2 = hosts.findIndex(dev => dev.id === deviceID)
+    let index3 = timers.findIndex(tmr => tmr.id === deviceID)
+    clearTimeout(timers[index3].timer)
+    timers.splice(index3, 1)
     hosts.splice(index2, 1)
     tempFile.devices.splice(index, 1)
     saveFile(tempFile)
@@ -154,16 +190,17 @@ const mainInit = () => {
       notes: newDevice.notes,
       frequency: newDevice.frequency,
       trys: newDevice.trys
-
     }
     tempFile.devices.push(tempDevice)
     hosts.push({
       ...tempDevice,
       status: 'PENDING',
       lastChecked: null,
-      lastGood: null
+      lastGood: null,
+      misses: 0
     })
     saveFile(tempFile)
+    makeTimers()
     pingEm()
   })
 
@@ -172,37 +209,73 @@ const mainInit = () => {
     pingEm()
   })
 
-  const pingEm = () => {
-    console.log('Pinging all')
-    hosts.forEach(function (host) {
-      ping.sys.probe(host.address, function (isAlive) {
-        const rightNow = new Date();
-        const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
+  ipcMain.on('pingOne', (e, theOne) => {
+    console.log('Got a ping all')
+    pingOne(theOne)
+  })
 
-        if (isAlive) {
-          //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is alive')
-          let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
-          hosts[theIndex].lastGood = now
-          hosts[theIndex].lastChecked = now
-          hosts[theIndex].status = 'ALIVE'
-          win.webContents.send('devices', hosts)
-        } else {
-          //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is dead')
-          let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
-          hosts[theIndex].lastChecked = now
-          hosts[theIndex].status = 'DEAD'
-          win.webContents.send('devices', hosts)
+  ipcMain.on('updateEmail', (e, newEmailSettings) => {
+    console.log('Update Email')
+    let tempFile = getFile()
+    tempFile.email = newEmailSettings
+    saveFile(tempFile)
+    emailInfo = newEmailSettings
+    win.webContents.send('emailUpdated')
+  })
+
+  ipcMain.on('getEmailSettings', () => {
+    win.webContents.send('emailSettings', emailInfo)
+  })
+
+  const pingOne = (host) => {
+    // Reset the timer
+    let tmrIdx = timers.findIndex(tmr => tmr.id === host.id)
+    clearTimeout(timers[tmrIdx].timer)
+    timers[tmrIdx].timer = setTimeout(() => {
+      //console.log(host.name, 'Timer Fire')
+      let theHost = hosts.find(hst => hst.id === host.id)
+      pingOne(theHost)
+    }, host.frequency * 1000);
+
+    ping.sys.probe(host.address, function (isAlive) {
+      const rightNow = new Date();
+      const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
+
+      if (isAlive) {
+        //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is alive')
+        let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
+        hosts[theIndex].lastGood = now
+        hosts[theIndex].lastChecked = now
+        hosts[theIndex].status = 'ALIVE'
+        hosts[theIndex].misses = 0
+        win.webContents.send('devices', hosts)
+        if (hosts[theIndex].misses === true) {
+          hosts[theIndex].alarm = false
+          console.log('Send Restored Email here')
         }
-      });
+      } else {
+        //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is dead')
+        let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
+        hosts[theIndex].lastChecked = now
+        hosts[theIndex].status = 'DEAD'
+        hosts[theIndex].misses = hosts[theIndex].misses + 1
+        win.webContents.send('devices', hosts)
+        if (hosts[theIndex].misses === hosts[theIndex].trys) {
+          console.log('Send Error Email Here')
+        }
+      }
     });
   }
 
-  setInterval(() => {
-    pingEm()
-  }, 15000);
+  const pingEm = () => {
+    console.log('Pinging all')
+    hosts.forEach(function (host) {
+      pingOne(host)
+    });
+  }
 
   makeDevices()
-  win.webContents.send('devices', hosts)
+  makeEmail()
   pingEm()
 }
 
