@@ -8,11 +8,11 @@ function App() {
 
 
   useEffect(() => {
-    ipcRenderer.on('message', (e, theMessage) => {
+    ipcRenderer.on('message', (e: object, theMessage: string) => {
       console.log(theMessage)
     })
 
-    ipcRenderer.on('app_version', (event, arg) => {
+    ipcRenderer.on('app_version', (event: object, arg: any) => {
       ipcRenderer.removeAllListeners('app_version');
       document.title = 'nubar-ping --- v' + arg.version;
     });
