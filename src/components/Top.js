@@ -173,7 +173,7 @@ export default function Top() {
     return (
         <Fragment>
             <Navbar bg="light" expand="sm" >
-                <Navbar.Brand >nubar-ping</Navbar.Brand>
+                <Navbar.Brand style={{marginLeft:'8px'}} >nubar-ping</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
