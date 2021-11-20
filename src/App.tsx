@@ -6,7 +6,6 @@ const { ipcRenderer } = window.require('electron')
 
 function App() {
 
-
   useEffect(() => {
     ipcRenderer.on('message', (e: object, theMessage: string) => {
       console.log(theMessage)
@@ -16,7 +15,6 @@ function App() {
       ipcRenderer.removeAllListeners('app_version');
       document.title = 'nubar-ping --- v' + arg.version;
     });
-
 
     ipcRenderer.send('reactIsReady')
 
