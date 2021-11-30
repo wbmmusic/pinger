@@ -1,6 +1,6 @@
 {
     "name": "nubar-ping",
-    "version": "0.0.17",
+    "version": "0.0.18",
     "private": true,
     "dependencies": {
         "@testing-library/jest-dom": "^5.15.1",
@@ -61,7 +61,7 @@
         ]
     },
     "devDependencies": {
-        "electron": "^16.0.2",
+        "electron": "^16.0.3",
         "electron-builder": "^22.14.5",
         "electron-rebuild": "^3.2.5"
     },
