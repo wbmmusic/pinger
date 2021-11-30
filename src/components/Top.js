@@ -119,11 +119,11 @@ export default function Top() {
                         <Modal.Title>Add New Device</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Table borderless size="sm">
+                        <Table borderless size="sm" style={{ width: '100%' }}>
                             <tbody>
                                 <tr>
                                     <td style={{ textAlign: 'right' }}>Name:</td>
-                                    <td>
+                                    <td style={{ width: '100%' }} >
                                         <input
                                             style={{ width: '100%' }}
                                             type="text" value={newDeviceModal.name}
@@ -150,7 +150,7 @@ export default function Top() {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style={{ textAlign: 'right' }}>Ping Frequency:</td>
+                                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Ping Frequency:</td>
                                     <td>
                                         <input type="number" min="15" max="720"
                                             value={newDeviceModal.frequency}
@@ -158,7 +158,7 @@ export default function Top() {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style={{ textAlign: 'right' }}>Trys Before Email:</td>
+                                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Trys Before Email:</td>
                                     <td><input type="number" min="1" max="100"
                                         value={newDeviceModal.trys} onChange={(e) => setNewDeviceModal(old => ({ ...old, trys: parseInt(e.target.value) }))} /></td>
                                 </tr>
