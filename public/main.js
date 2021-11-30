@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path')
+const { join } = require('path')
 const url = require('url')
 
 const { v4: uuid } = require('uuid');
@@ -30,11 +30,11 @@ const emptyConfig = {
 if (isMac) {
 
 } else {
-  pathToConfig = path.join('C:', 'ProgramData', 'WBM Tek', 'nubarPing', 'pingConfig.json')
+  pathToConfig = join('C:', 'ProgramData', 'WBM Tek', 'nubarPing', 'pingConfig.json')
   if (!fs.existsSync(pathToConfig)) {
     console.log('DOESN\'T EXIST')
-    if (fs.existsSync(path.join('C:', 'ProgramData'))) {
-      fs.mkdirSync(path.join('C:', 'ProgramData', 'WBM Tek', 'nubarPing'), { recursive: true })
+    if (fs.existsSync(join('C:', 'ProgramData'))) {
+      fs.mkdirSync(join('C:', 'ProgramData', 'WBM Tek', 'nubarPing'), { recursive: true })
       fs.writeFileSync(pathToConfig, JSON.stringify(emptyConfig))
     } else {
       console.log('NO PROGRAMDATA FOLDER')
@@ -66,20 +66,20 @@ function createWindow() {
   win = new BrowserWindow({
     width: 900,
     height: 700,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    },
-    icon: path.join(__dirname, '/favicon.ico')
+    webPreferences: { preload: join(__dirname, 'preload.js') },
+    icon: join(__dirname, '/favicon.ico'),
+    autoHideMenuBar: true
   })
 
   const startUrl = process.env.ELECTRON_START_URL || url.format({
-    pathname: path.join(__dirname, '/../build/index.html'),
+    pathname: join(__dirname, '/../build/index.html'),
     protocol: 'file:',
     slashes: true
   });
   win.loadURL(startUrl);
   //win.maximize()
+
+  mainInit()
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -134,9 +134,9 @@ const mainInit = () => {
     emailInfo = getFile().email
   }
 
-  ipcMain.on('getDevices', () => {
+  ipcMain.handle('getDevices', () => {
     console.log('Got Request For Devices')
-    win.webContents.send('devices', hosts)
+    return hosts
   })
 
   ipcMain.on('updateDevice', (e, updatedDevice) => {
@@ -312,10 +312,11 @@ app.on('ready', () => {
 
         autoUpdater.checkForUpdatesAndNotify()
       }
-      mainInit()
+      
     }
 
   })
+  
   createWindow()
 })
 ///////////////////////

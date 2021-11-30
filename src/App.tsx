@@ -2,24 +2,28 @@ import { useEffect } from 'react';
 import Top from './components/Top'
 import Updates from './Updates'
 
-const { ipcRenderer } = window.require('electron')
+declare global {
+  interface Window {
+    electron: any;
+  }
+}
 
 function App() {
 
   useEffect(() => {
-    ipcRenderer.on('message', (e: object, theMessage: string) => {
+    window.electron.ipcRenderer.on('message', (e: object, theMessage: string) => {
       console.log(theMessage)
     })
 
-    ipcRenderer.on('app_version', (event: object, arg: any) => {
-      ipcRenderer.removeAllListeners('app_version');
+    window.electron.ipcRenderer.on('app_version', (event: object, arg: any) => {
+      window.electron.ipcRenderer.removeAllListeners('app_version');
       document.title = 'nubar-ping --- v' + arg.version;
     });
 
-    ipcRenderer.send('reactIsReady')
+    window.electron.ipcRenderer.send('reactIsReady')
 
     return () => {
-      ipcRenderer.removeAllListeners('reactIsReady')
+      window.electron.ipcRenderer.removeAllListeners('reactIsReady')
     }
   }, [])
 

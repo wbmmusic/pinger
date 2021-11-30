@@ -2,7 +2,6 @@
 import React, { useState, Fragment, useEffect } from 'react'
 import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Spinner, Table } from 'react-bootstrap'
 import StatusTable from './StatusTable'
-const { ipcRenderer } = window.require('electron')
 
 const Cryptr = require('cryptr');
 const cryptr = new Cryptr('myTotalySecretKey');
@@ -31,24 +30,23 @@ export default function Top() {
     const [processingModal, setProcessingModal] = useState(false)
 
     useEffect(() => {
-        ipcRenderer.on('emailSettings', (e, emailSettings) => {
-            let tempEmailSettings = { ...emailSettingsModal }
-            tempEmailSettings.show = true
-            tempEmailSettings.provider = emailSettings.provider
-            tempEmailSettings.email = emailSettings.email
-            tempEmailSettings.password = cryptr.decrypt(emailSettings.password)
-            tempEmailSettings.addresses = emailSettings.addresses
+        window.electron.ipcRenderer.on('emailSettings', (e, emailSettings) => {
             setProcessingModal(false)
-            setEmailSettingsModal(tempEmailSettings)
+            setEmailSettingsModal(old => ({
+                ...old,
+                show: true,
+                provider: emailSettings.provider,
+                email: emailSettings.email,
+                password: cryptr.decrypt(emailSettings.password),
+                addresses: emailSettings.addresses
+            }))
         })
 
-        ipcRenderer.on('emailUpdated', () => {
-            setProcessingModal(false)
-        })
+        window.electron.ipcRenderer.on('emailUpdated', () => setProcessingModal(false))
 
         return () => {
-            ipcRenderer.removeAllListeners('emailSettings')
-            ipcRenderer.removeAllListeners('emailUpdated')
+            window.electron.ipcRenderer.removeAllListeners('emailSettings')
+            window.electron.ipcRenderer.removeAllListeners('emailUpdated')
         }
     }, [])
 
@@ -56,7 +54,7 @@ export default function Top() {
         setTimeout(() => {
             if (emailSettingsModal.save === true) {
                 let thePass = cryptr.encrypt(emailSettingsModal.password)
-                ipcRenderer.send('updateEmail', {
+                window.electron.ipcRenderer.send('updateEmail', {
                     provider: emailSettingsModal.provider,
                     email: emailSettingsModal.email,
                     password: thePass,
@@ -68,112 +66,33 @@ export default function Top() {
 
     }, [emailSettingsModal])
 
-    const addDevice = () => {
-        //console.log('Add Device')
-        let tempNewDeviceModal = { ...defaultNewDeviceModal }
-        tempNewDeviceModal.show = true
-        setNewDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeTrys = (value) => {
-        let theValue = parseInt(value)
-        let tempNewDeviceModal = { ...newDeviceModal }
-        tempNewDeviceModal.trys = theValue
-        setNewDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeFrequency = (value) => {
-        let theValue = parseFloat(value)
-        //console.log(theValue)
-        let tempNewDeviceModal = { ...newDeviceModal }
-        tempNewDeviceModal.frequency = theValue
-        setNewDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeAddress = (theAddress) => {
-        //console.log(theAddress)
-        let tempNewDeviceModal = { ...newDeviceModal }
-        tempNewDeviceModal.address = theAddress
-        setNewDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeName = (theName) => {
-        //console.log(theName)
-        let tempNewDeviceModal = { ...newDeviceModal }
-        tempNewDeviceModal.name = theName
-        setNewDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeNotes = (theNotes) => {
-        //console.log(theNotes)
-        let tempNewDeviceModal = { ...newDeviceModal }
-        tempNewDeviceModal.notes = theNotes
-        setNewDeviceModal(tempNewDeviceModal)
-    }
-
     const createDevice = () => {
-        ipcRenderer.send('newDevice', newDeviceModal)
+        window.electron.ipcRenderer.send('newDevice', newDeviceModal)
         setNewDeviceModal(defaultNewDeviceModal)
     }
 
-    const hideModal = () => {
-        setNewDeviceModal(defaultNewDeviceModal)
-    }
+    const hideModal = () => setNewDeviceModal(defaultNewDeviceModal)
 
-    const pingAll = () => {
-        ipcRenderer.send('pingAll')
-    }
-
-    const changePassword = (pass) => {
-        let tempEmailSettingsModal = { ...emailSettingsModal }
-        tempEmailSettingsModal.password = pass
-        setEmailSettingsModal(tempEmailSettingsModal)
-    }
-
-    const changeEmail = (email) => {
-        let tempEmailSettingsModal = { ...emailSettingsModal }
-        tempEmailSettingsModal.email = email
-        setEmailSettingsModal(tempEmailSettingsModal)
-    }
+    const pingAll = () => window.electron.ipcRenderer.send('pingAll')
 
     const emailSettings = () => {
-        let tempX = { ...emailSettingsModal }
-        tempX.save = false
-        tempX.show = false
-        tempX.processing = true
-        setEmailSettingsModal(tempX)
-        ipcRenderer.send('getEmailSettings')
+        setEmailSettingsModal(old => ({ ...old, save: false, show: false, processing: true }))
+        window.electron.ipcRenderer.send('getEmailSettings')
     }
 
-    const closeEmailModal = () => {
-        setEmailSettingsModal(defaultEmailSettingsModal)
-    }
-
-    const handleNewAddress = (theNewAddress) => {
-        let tempEmailSettingsModal = { ...emailSettingsModal }
-        tempEmailSettingsModal.newAddress = theNewAddress
-        setEmailSettingsModal(tempEmailSettingsModal)
-    }
+    const closeEmailModal = () => setEmailSettingsModal(defaultEmailSettingsModal)
 
     const handleUpdateEmailSettings = () => {
-        let tempX = { ...emailSettingsModal }
-        tempX.save = true
-        tempX.show = false
-        tempX.processing = true
-        setEmailSettingsModal(tempX)
+        setEmailSettingsModal(old => ({ ...old, save: true, show: false, processing: true }))
         console.log('Handle Update Email Setting')
     }
 
-    const hideProcessingModal = () => {
-        let tempEmailSettingsModal = { ...emailSettingsModal }
-        tempEmailSettingsModal.processing = false
-        setEmailSettingsModal(tempEmailSettingsModal)
-    }
+    const hideProcessingModal = () => setEmailSettingsModal(old => ({ ...old, processing: false }))
 
     return (
         <Fragment>
             <Navbar bg="light" expand="sm" >
-                <Navbar.Brand style={{marginLeft:'8px'}} >nubar-ping</Navbar.Brand>
+                <Navbar.Brand style={{ marginLeft: '8px' }} >nubar-ping</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
@@ -183,7 +102,7 @@ export default function Top() {
                         <NavDropdown title="Devices" id="basic-nav-dropdown">
                             <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
                             <NavDropdown.Divider />
-                            <NavDropdown.Item onClick={addDevice}>Add Device</NavDropdown.Item>
+                            <NavDropdown.Item onClick={() => setNewDeviceModal({ ...defaultNewDeviceModal, show: true })}>Add Device</NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
                 </Navbar.Collapse>
@@ -208,7 +127,7 @@ export default function Top() {
                                         <input
                                             style={{ width: '100%' }}
                                             type="text" value={newDeviceModal.name}
-                                            onChange={(e) => changeName(e.target.value)} />
+                                            onChange={(e) => setNewDeviceModal(old => ({ ...old, name: e.target.value }))} />
                                     </td>
                                 </tr>
                                 <tr>
@@ -217,7 +136,7 @@ export default function Top() {
                                         <input
                                             style={{ width: '100%' }}
                                             type="text" value={newDeviceModal.address}
-                                            onChange={(e) => changeAddress(e.target.value)} />
+                                            onChange={(e) => setNewDeviceModal(old => ({ ...old, address: e.target.value }))} />
                                     </td>
                                 </tr>
                                 <tr>
@@ -226,7 +145,7 @@ export default function Top() {
                                         <textarea
                                             style={{ width: '100%', fontSize: '12px' }}
                                             value={newDeviceModal.notes}
-                                            onChange={(e) => changeNotes(e.target.value)}
+                                            onChange={(e) => setNewDeviceModal(old => ({ ...old, notes: e.target.value }))}
                                         />
                                     </td>
                                 </tr>
@@ -235,13 +154,13 @@ export default function Top() {
                                     <td>
                                         <input type="number" min="15" max="720"
                                             value={newDeviceModal.frequency}
-                                            onChange={(e) => changeFrequency(e.target.value)} />{" Seconds"}
+                                            onChange={(e) => setNewDeviceModal(old => ({ ...old, frequency: parseFloat(e.target.value) }))} />{" Seconds"}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style={{ textAlign: 'right' }}>Trys Before Email:</td>
                                     <td><input type="number" min="1" max="100"
-                                        value={newDeviceModal.trys} onChange={(e) => changeTrys(e.target.value)} /></td>
+                                        value={newDeviceModal.trys} onChange={(e) => setNewDeviceModal(old => ({ ...old, trys: parseInt(e.target.value) }))} /></td>
                                 </tr>
                             </tbody>
                         </Table>
@@ -288,7 +207,7 @@ export default function Top() {
                                             aria-label="Email Address"
                                             aria-describedby="basic-addon2"
                                             type="email"
-                                            onChange={(e) => changeEmail(e.target.value)}
+                                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, email: e.target.value }))}
                                             value={emailSettingsModal.email}
                                         />
                                     </td>
@@ -302,7 +221,7 @@ export default function Top() {
                                             aria-label="Email Account Password"
                                             aria-describedby="basic-addon2"
                                             type="password"
-                                            onChange={(e) => changePassword(e.target.value)}
+                                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, password: e.target.value }))}
                                             value={emailSettingsModal.password}
                                         />
 
@@ -333,12 +252,10 @@ export default function Top() {
                                                         aria-label="Add Recipient Email"
                                                         aria-describedby="basic-addon2"
                                                         type="email"
-                                                        onChange={(e) => handleNewAddress(e.target.value)}
+                                                        onChange={(e) => setEmailSettingsModal(old => ({ ...old, newAddress: e.target.value }))}
                                                         value={emailSettingsModal.newAddress}
                                                     />
-                                                    <InputGroup.Append>
-                                                        <Button size="sm" type="submit" variant="outline-primary">➕</Button>
-                                                    </InputGroup.Append>
+                                                    <Button size="sm" type="submit" variant="outline-primary">➕</Button>
                                                 </InputGroup>
                                             </Form>
                                         </div>

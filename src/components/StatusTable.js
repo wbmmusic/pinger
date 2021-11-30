@@ -1,8 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react'
 import { Button, Modal, Table } from 'react-bootstrap'
 
-const { ipcRenderer } = window.require('electron')
-
 export default function StatusTable() {
     const defaultEditDeviceModal = {
         show: false
@@ -12,16 +10,9 @@ export default function StatusTable() {
     const [deleteDeviceModal, setDeleteDeviceModal] = useState(false)
 
     useEffect(() => {
-        ipcRenderer.on('devices', (e, theDevices) => {
-            //console.log(theDevices)
-            setDevices(theDevices)
-        })
-
-        ipcRenderer.send('getDevices')
-
-        return () => {
-            ipcRenderer.removeAllListeners('devices')
-        }
+        window.electron.ipcRenderer.invoke('getDevices')
+            .then(res => setDevices(res))
+            .catch(err => console.log(err))
     }, [])
 
     const handleClose = () => {
@@ -29,7 +20,7 @@ export default function StatusTable() {
     }
 
     const executeDeleteDevice = () => {
-        ipcRenderer.send('deleteDevice', editDeviceModal.id)
+        window.electron.ipcRenderer.send('deleteDevice', editDeviceModal.id)
         setDeleteDeviceModal(false)
         setEditDeviceModal(defaultEditDeviceModal)
     }
@@ -42,7 +33,7 @@ export default function StatusTable() {
     }
 
     const updateDevice = () => {
-        ipcRenderer.send('updateDevice', editDeviceModal)
+        window.electron.ipcRenderer.send('updateDevice', editDeviceModal)
         setDeleteDeviceModal(false)
         setEditDeviceModal(defaultEditDeviceModal)
     }
@@ -109,7 +100,7 @@ export default function StatusTable() {
                     <td style={styles}>{devices[i].status}</td>
                     <td style={styles}>{devices[i].lastChecked}</td>
                     <td style={styles}>{devices[i].lastGood}</td>
-                    <td style={styles}><button onClick={() => ipcRenderer.send('pingOne', devices[i])} size="sm">Ping</button></td>
+                    <td style={styles}><button onClick={() => window.electron.ipcRenderer.send('pingOne', devices[i])} size="sm">Ping</button></td>
                     <td style={styles}>
                         <div
                             style={{ display: 'inline-block', cursor: 'pointer' }}
