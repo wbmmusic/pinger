@@ -3,8 +3,8 @@ import React, { useState, Fragment, useEffect } from 'react'
 import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Spinner, Table } from 'react-bootstrap'
 import StatusTable from './StatusTable'
 
-const Cryptr = require('cryptr');
-const cryptr = new Cryptr('myTotalySecretKey');
+
+
 
 export default function Top() {
     const defaultNewDeviceModal = {
@@ -37,7 +37,7 @@ export default function Top() {
                 show: true,
                 provider: emailSettings.provider,
                 email: emailSettings.email,
-                password: cryptr.decrypt(emailSettings.password),
+                password: window.electron.cryptr.decrypt(emailSettings.password),
                 addresses: emailSettings.addresses
             }))
         })
@@ -53,7 +53,7 @@ export default function Top() {
     useEffect(() => {
         setTimeout(() => {
             if (emailSettingsModal.save === true) {
-                let thePass = cryptr.encrypt(emailSettingsModal.password)
+                let thePass = window.electron.cryptr.encrypt(emailSettingsModal.password)
                 window.electron.ipcRenderer.send('updateEmail', {
                     provider: emailSettingsModal.provider,
                     email: emailSettingsModal.email,
