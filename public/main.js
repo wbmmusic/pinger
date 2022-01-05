@@ -66,6 +66,7 @@ function createWindow() {
   win = new BrowserWindow({
     width: 900,
     height: 700,
+    show: false,
     webPreferences: { preload: join(__dirname, 'preload.js') },
     icon: join(__dirname, '/favicon.ico'),
     autoHideMenuBar: true
@@ -82,9 +83,9 @@ function createWindow() {
   mainInit()
 
   // Emitted when the window is closed.
-  win.on('closed', () => {
-    win = null
-  })
+  win.on('closed', () => win = null)
+
+  win.on('ready-to-show', () => win.show())
 }
 
 const mainInit = () => {
@@ -312,11 +313,11 @@ app.on('ready', () => {
 
         autoUpdater.checkForUpdatesAndNotify()
       }
-      
+
     }
 
   })
-  
+
   createWindow()
 })
 ///////////////////////
