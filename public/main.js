@@ -6,15 +6,16 @@ const { v4: uuid } = require('uuid');
 var ping = require('ping');
 const date = require('date-and-time');
 const fs = require('fs');
-const nodemailer = require("nodemailer");
 
 const { autoUpdater } = require('electron-updater');
+const { Pingable } = require('./pingable');
 
 let firstReactInit = true
 const isMac = process.platform === 'darwin'
 var hosts = [];
 var emailInfo;
 var timers = []
+var xyz = []
 
 let pathToConfig
 const emptyConfig = {
@@ -89,17 +90,12 @@ function createWindow() {
 }
 
 const mainInit = () => {
-  const getFile = () => {
-    console.log('Get File')
-    let file = JSON.parse(fs.readFileSync(pathToConfig))
-    //console.log(file)
-    return file
-  }
+  const getFile = () => JSON.parse(fs.readFileSync(pathToConfig))
 
   const saveFile = (fileData) => {
     console.log('Save File')
     //console.log(fileData)
-    let file = fs.writeFileSync(pathToConfig, JSON.stringify(fileData))
+    let file = fs.writeFileSync(pathToConfig, JSON.stringify(fileData, null, '\t'))
     //console.log(file)
     return file
   }
@@ -107,12 +103,7 @@ const mainInit = () => {
   const makeTimers = () => {
     hosts.forEach(host => {
       let timerIndex = timers.findIndex(tmr => tmr.id === host.id)
-      if (timerIndex === -1) {
-        timers.push({
-          id: host.id,
-          timer: null
-        })
-      }
+      if (timerIndex === -1) timers.push({ id: host.id, timer: null })
     })
   }
 
@@ -121,6 +112,7 @@ const mainInit = () => {
     hosts = getFile().devices
 
     for (let i = 0; i < hosts.length; i++) {
+      xyz.push(new Pingable(hosts[i]))
       hosts[i].status = 'PENDING'
       hosts[i].lastChecked = null
       hosts[i].lastGood = null
@@ -131,9 +123,7 @@ const mainInit = () => {
     makeTimers();
   }
 
-  const makeEmail = () => {
-    emailInfo = getFile().email
-  }
+  const makeEmail = () => emailInfo = getFile().email
 
   ipcMain.handle('getDevices', () => {
     console.log('Got Request For Devices')
@@ -206,15 +196,9 @@ const mainInit = () => {
     pingEm()
   })
 
-  ipcMain.on('pingAll', () => {
-    console.log('Got a ping all')
-    pingEm()
-  })
+  ipcMain.handle('pingAll', () => pingEm())
 
-  ipcMain.on('pingOne', (e, theOne) => {
-    console.log('Got a ping all')
-    pingOne(theOne)
-  })
+  ipcMain.on('pingOne', (e, theOne) => pingOne(theOne))
 
   ipcMain.on('updateEmail', (e, newEmailSettings) => {
     console.log('Update Email')
@@ -225,9 +209,7 @@ const mainInit = () => {
     win.webContents.send('emailUpdated')
   })
 
-  ipcMain.on('getEmailSettings', () => {
-    win.webContents.send('emailSettings', emailInfo)
-  })
+  ipcMain.handle('getEmailSettings', () => emailInfo)
 
   const pingOne = (host) => {
     // Reset the timer
@@ -271,9 +253,8 @@ const mainInit = () => {
 
   const pingEm = () => {
     console.log('Pinging all')
-    hosts.forEach(function (host) {
-      pingOne(host)
-    });
+    hosts.forEach(host => pingOne(host))
+    return "Pinged All"
   }
 
   makeDevices()

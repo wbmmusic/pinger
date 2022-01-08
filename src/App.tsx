@@ -11,11 +11,11 @@ declare global {
 function App() {
 
   useEffect(() => {
-    window.electron.ipcRenderer.on('message', (e: object, theMessage: string) => {
+    window.electron.receive('message', (e: object, theMessage: string) => {
       console.log(theMessage)
     })
 
-    window.electron.ipcRenderer.on('app_version', (event: object, arg: any) => {
+    window.electron.receive('app_version', (event: object, arg: any) => {
       window.electron.ipcRenderer.removeAllListeners('app_version');
       document.title = 'nubar-ping --- v' + arg.version;
     });

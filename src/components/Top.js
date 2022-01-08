@@ -3,9 +3,6 @@ import React, { useState, Fragment, useEffect } from 'react'
 import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Spinner, Table } from 'react-bootstrap'
 import StatusTable from './StatusTable'
 
-
-
-
 export default function Top() {
     const defaultNewDeviceModal = {
         show: false,
@@ -30,23 +27,10 @@ export default function Top() {
     const [processingModal, setProcessingModal] = useState(false)
 
     useEffect(() => {
-        window.electron.ipcRenderer.on('emailSettings', (e, emailSettings) => {
-            setProcessingModal(false)
-            setEmailSettingsModal(old => ({
-                ...old,
-                show: true,
-                provider: emailSettings.provider,
-                email: emailSettings.email,
-                password: window.electron.cryptr.decrypt(emailSettings.password),
-                addresses: emailSettings.addresses
-            }))
-        })
-
-        window.electron.ipcRenderer.on('emailUpdated', () => setProcessingModal(false))
+        window.electron.receive('emailUpdated', () => setProcessingModal(false))
 
         return () => {
-            window.electron.ipcRenderer.removeAllListeners('emailSettings')
-            window.electron.ipcRenderer.removeAllListeners('emailUpdated')
+            window.electron.removeListener('emailUpdated')
         }
     }, [])
 
@@ -73,11 +57,27 @@ export default function Top() {
 
     const hideModal = () => setNewDeviceModal(defaultNewDeviceModal)
 
-    const pingAll = () => window.electron.ipcRenderer.send('pingAll')
+    const pingAll = () => {
+        window.electron.ipcRenderer.invoke('pingAll')
+            .then(res => console.log(res))
+            .catch(err => console.error(err))
+    }
 
     const emailSettings = () => {
         setEmailSettingsModal(old => ({ ...old, save: false, show: false, processing: true }))
-        window.electron.ipcRenderer.send('getEmailSettings')
+        window.electron.ipcRenderer.invoke('getEmailSettings')
+            .then(res => {
+                setProcessingModal(false)
+                setEmailSettingsModal(old => ({
+                    ...old,
+                    show: true,
+                    provider: res.provider,
+                    email: res.email,
+                    password: window.electron.cryptr.decrypt(res.password),
+                    addresses: res.addresses
+                }))
+            })
+            .catch(err => console.error(err))
     }
 
     const closeEmailModal = () => setEmailSettingsModal(defaultEmailSettingsModal)
@@ -260,8 +260,9 @@ export default function Top() {
                                             </Form>
                                         </div>
                                         <div>
-                                            {emailSettingsModal.addresses.map(usr => (
+                                            {emailSettingsModal.addresses.map((usr, i) => (
                                                 <div
+                                                    key={'User' + i}
                                                     style={{
                                                         display: 'inline-block',
                                                         fontSize: '12px',

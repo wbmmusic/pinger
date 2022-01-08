@@ -8,11 +8,11 @@ export default function Updates() {
 
     useEffect(() => {
         console.log('Top Of Updates')
-        window.electron.ipcRenderer.on('checkingForUpdates', () => {
+        window.electron.receive('checkingForUpdates', () => {
             console.log('Checking for updates')
         })
 
-        window.electron.ipcRenderer.on('updateAvailable', () => {
+        window.electron.receive('updateAvailable', () => {
             console.log('Downloading update')
             let tempPopupContents = { ...popupContents }
             tempPopupContents.contents = (
@@ -39,11 +39,11 @@ export default function Updates() {
             setShow(true)
         })
 
-        window.electron.ipcRenderer.on('noUpdate', () => {
+        window.electron.receive('noUpdate', () => {
             console.log('Up to date')
         })
 
-        window.electron.ipcRenderer.on('updateDownloaded', (e, releaseInfo) => {
+        window.electron.receive('updateDownloaded', (e, releaseInfo) => {
             console.log('Update Downloaded')
             //console.log(releaseInfo)
             let tempPopupContents = { ...popupContents }
@@ -72,11 +72,11 @@ export default function Updates() {
             setShow(true)
         })
 
-        window.electron.ipcRenderer.on('updateError', (error) => {
+        window.electron.receive('updateError', (error) => {
             console.log('Update Error', error,)
         })
 
-        window.electron.ipcRenderer.on('updateDownloadProgress', (e, progressPercent) => {
+        window.electron.receive('updateDownloadProgress', (e, progressPercent) => {
             let tempPopupContents = { ...popupContents }
             tempPopupContents.contents = (
                 <div>
@@ -101,12 +101,12 @@ export default function Updates() {
         })
 
         return () => {
-            window.electron.ipcRenderer.removeAllListeners('checkingForUpdates')
-            window.electron.ipcRenderer.removeAllListeners('updateAvailable')
-            window.electron.ipcRenderer.removeAllListeners('noUpdate')
-            window.electron.ipcRenderer.removeAllListeners('updateError')
-            window.electron.ipcRenderer.removeAllListeners('updateDownloaded')
-            window.electron.ipcRenderer.removeAllListeners('updateDownloadProgress')
+            window.electron.removeListener('checkingForUpdates')
+            window.electron.removeListener('updateAvailable')
+            window.electron.removeListener('noUpdate')
+            window.electron.removeListener('updateError')
+            window.electron.removeListener('updateDownloaded')
+            window.electron.removeListener('updateDownloadProgress')
         }
     }, [])
 

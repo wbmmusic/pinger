@@ -13,11 +13,15 @@ export default function StatusTable() {
         window.electron.ipcRenderer.invoke('getDevices')
             .then(res => setDevices(res))
             .catch(err => console.log(err))
+
+        window.electron.receive('devices', (devs) => setDevices(devs))
+
+        return () => {
+            window.electron.removeListener('devices')
+        }
     }, [])
 
-    const handleClose = () => {
-        setEditDeviceModal(defaultEditDeviceModal)
-    }
+    const handleClose = () => setEditDeviceModal(defaultEditDeviceModal)
 
     const executeDeleteDevice = () => {
         window.electron.ipcRenderer.send('deleteDevice', editDeviceModal.id)
@@ -26,9 +30,7 @@ export default function StatusTable() {
     }
 
     const deleteDevice = () => {
-        let tempEditDeviceModal = { ...editDeviceModal }
-        tempEditDeviceModal.show = false
-        setEditDeviceModal(tempEditDeviceModal)
+        setEditDeviceModal(old => ({ ...old, show: false }))
         setDeleteDeviceModal(true)
     }
 
@@ -40,67 +42,35 @@ export default function StatusTable() {
 
     const cancelDelete = () => {
         setDeleteDeviceModal(false)
-        let tempEditDeviceModal = { ...editDeviceModal }
-        tempEditDeviceModal.show = true
-        setEditDeviceModal(tempEditDeviceModal)
+        setEditDeviceModal(old => ({ ...old, show: true }))
     }
 
-    const changeTrys = (value) => {
-        let theValue = parseInt(value)
-        let tempNewDeviceModal = { ...editDeviceModal }
-        tempNewDeviceModal.trys = theValue
-        setEditDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeFrequency = (value) => {
-        let theValue = parseFloat(value)
-        //console.log(theValue)
-        let tempNewDeviceModal = { ...editDeviceModal }
-        tempNewDeviceModal.frequency = theValue
-        setEditDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeAddress = (theAddress) => {
-        //console.log(theAddress)
-        let tempNewDeviceModal = { ...editDeviceModal }
-        tempNewDeviceModal.address = theAddress
-        setEditDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeName = (theName) => {
-        //console.log(theName)
-        let tempNewDeviceModal = { ...editDeviceModal }
-        tempNewDeviceModal.name = theName
-        setEditDeviceModal(tempNewDeviceModal)
-    }
-
-    const changeNotes = (theNotes) => {
-        //console.log(theNotes)
-        let tempNewDeviceModal = { ...editDeviceModal }
-        tempNewDeviceModal.notes = theNotes
-        setEditDeviceModal(tempNewDeviceModal)
-    }
+    const changeTrys = (value) => setEditDeviceModal(old => ({ ...old, trys: parseInt(value) }))
+    const changeFrequency = (value) => setEditDeviceModal(old => ({ ...old, frequency: parseFloat(value) }))
+    const changeAddress = (theAddress) => setEditDeviceModal(old => ({ ...old, address: theAddress }))
+    const changeName = (theName) => setEditDeviceModal(old => ({ ...old, name: theName }))
+    const changeNotes = (theNotes) => setEditDeviceModal(old => ({ ...old, notes: theNotes }))
 
     const makeRows = () => {
         let rows = []
 
         for (let i = 0; i < devices.length; i++) {
-            let styles = {}
+            let styles = { verticalAlign: 'middle' }
 
             if (devices[i].status === 'DEAD') {
-                styles = { backgroundColor: '#FFA0A0' }
+                styles = { ...styles, backgroundColor: '#FFA0A0' }
             } else if (devices[i].status === 'PENDING') {
-                styles = { backgroundColor: 'yellow' }
+                styles = { ...styles, backgroundColor: 'yellow' }
             }
 
             rows.push(
                 <tr key={'row' + i}>
-                    <td style={{ ...styles }}>{devices[i].name}</td>
+                    <td style={styles}>{devices[i].name}</td>
                     <td style={styles}>{devices[i].address}</td>
                     <td style={styles}>{devices[i].status}</td>
                     <td style={styles}>{devices[i].lastChecked}</td>
                     <td style={styles}>{devices[i].lastGood}</td>
-                    <td style={styles}><button onClick={() => window.electron.ipcRenderer.send('pingOne', devices[i])} size="sm">Ping</button></td>
+                    <td style={styles}><Button onClick={() => window.electron.ipcRenderer.send('pingOne', devices[i])} size="sm">Ping</Button></td>
                     <td style={styles}>
                         <div
                             style={{ display: 'inline-block', cursor: 'pointer' }}
@@ -121,22 +91,24 @@ export default function StatusTable() {
 
     return (
         <Fragment>
-            <Table size="sm" hover style={{ userSelect: 'none' }} >
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Address</th>
-                        <th>Status</th>
-                        <th>Last Checked</th>
-                        <th>Last Checked Good</th>
-                        <th>Ping</th>
-                        <th>Edit</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {makeRows()}
-                </tbody>
-            </Table>
+            <div>
+                <Table size="sm" hover style={{ userSelect: 'none' }} stripped >
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Address</th>
+                            <th>Status</th>
+                            <th>Last Checked</th>
+                            <th>Last Checked Good</th>
+                            <th>Ping</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {makeRows()}
+                    </tbody>
+                </Table>
+            </div>
             <Modal show={editDeviceModal.show} onHide={handleClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>Edit Device</Modal.Title>
