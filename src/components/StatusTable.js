@@ -26,7 +26,6 @@ export default function StatusTable() {
         console.log(editDeviceModal.device.id)
         window.electron.ipcRenderer.invoke('deleteDevice', deleteDeviceModal.id)
             .then(res => {
-                setDevices(res)
                 setDeleteDeviceModal(defaultDeleteDeviceModal)
                 handleClose()
             })
