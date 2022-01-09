@@ -217,21 +217,17 @@ app.on('ready', () => {
                 if (app.isPackaged) {
                     win.webContents.send('message', 'App is packaged')
 
-                    ipcMain.on('installUpdate', () => autoUpdater.quitAndInstall(true, true))
+                    autoUpdater.on('error', (err) => win.webContents.send('updater', err))
+                    autoUpdater.on('checking-for-update', () => win.webContents.send('updater', "checking-for-update"))
+                    autoUpdater.on('update-available', (info) => win.webContents.send('updater', 'update-available', info))
+                    autoUpdater.on('update-not-available', (info) => win.webContents.send('updater', 'update-not-available', info))
+                    autoUpdater.on('download-progress', (info) => win.webContents.send('updater', 'download-progress', info))
+                    autoUpdater.on('update-downloaded', (info) => win.webContents.send('updater', 'update-downloaded', info))
 
-                    autoUpdater.on('checking-for-update', () => win.webContents.send('checkingForUpdates'))
-                    autoUpdater.on('update-available', () => win.webContents.send('updateAvailable'))
-                    autoUpdater.on('update-not-available', () => win.webContents.send('noUpdate'))
-                    autoUpdater.on('update-downloaded', (e, updateInfo, f, g) => { win.webContents.send('updateDownloaded', e) })
-                    autoUpdater.on('download-progress', (e) => { win.webContents.send('updateDownloadProgress', e.percent) })
-                    autoUpdater.on('error', (e, message) => win.webContents.send('updateError', message))
+                    ipcMain.on('installUpdate', () => autoUpdater.quitAndInstall())
 
-                    setInterval(() => {
-                        win.webContents.send('message', 'Interval')
-                        autoUpdater.checkForUpdatesAndNotify()
-                    }, 600000);
-
-                    autoUpdater.checkForUpdatesAndNotify()
+                    setTimeout(() => autoUpdater.checkForUpdates(), 3000);
+                    setInterval(() => autoUpdater.checkForUpdates(), 1000 * 60 * 60);
                 }
 
 
