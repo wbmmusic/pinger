@@ -15,7 +15,7 @@ export default function Email() {
                     <b>System:</b>{` Temp System Name`}
                 </div>
                 <div>
-                    Device/s you are pining stopped responding
+                    Device/s you are pinging stopped responding
                 </div>
                 <div style={{ marginTop: '10px' }}>
                     <div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px' }}>

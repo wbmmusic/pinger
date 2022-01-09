@@ -3,9 +3,10 @@ import { Button, Modal, Table } from 'react-bootstrap'
 
 export default function StatusTable() {
     const defaultEditDeviceModal = { show: false, device: { name: '' } }
+    const defaultDeleteDeviceModal = { show: false, id: '' }
     const [devices, setDevices] = useState([])
     const [editDeviceModal, setEditDeviceModal] = useState(defaultEditDeviceModal)
-    const [deleteDeviceModal, setDeleteDeviceModal] = useState(false)
+    const [deleteDeviceModal, setDeleteDeviceModal] = useState(defaultDeleteDeviceModal)
 
     useEffect(() => {
         window.electron.ipcRenderer.invoke('getDevices')
@@ -22,14 +23,21 @@ export default function StatusTable() {
     const handleClose = () => setEditDeviceModal(defaultEditDeviceModal)
 
     const executeDeleteDevice = () => {
-        window.electron.ipcRenderer.send('deleteDevice', editDeviceModal.device.id)
-        setDeleteDeviceModal(false)
-        handleClose()
+        console.log(editDeviceModal.device.id)
+        window.electron.ipcRenderer.invoke('deleteDevice', deleteDeviceModal.id)
+            .then(res => {
+                setDevices(res)
+                setDeleteDeviceModal(defaultDeleteDeviceModal)
+                handleClose()
+            })
+            .catch(err => console.log(err))
+
     }
 
     const deleteDevice = () => {
+        console.log("Delete Device In Func", editDeviceModal.device.id)
+        setDeleteDeviceModal({ show: true, id: editDeviceModal.device.id })
         handleClose()
-        setDeleteDeviceModal(true)
     }
 
     const updateDevice = () => {
@@ -86,7 +94,7 @@ export default function StatusTable() {
     return (
         <Fragment>
             <div>
-                <Table striped size="sm" hover style={{ userSelect: 'none' }} >
+                <Table size="sm" hover style={{ userSelect: 'none' }} >
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -160,7 +168,7 @@ export default function StatusTable() {
                     <Button size="sm" variant="primary" onClick={updateDevice}>Save Changes</Button>
                 </Modal.Footer>
             </Modal>
-            <Modal show={deleteDeviceModal} onHide={cancelDelete}>
+            <Modal show={deleteDeviceModal.show} onHide={cancelDelete}>
                 <Modal.Header closeButton>
                     <Modal.Title>Confirm Delete Device</Modal.Title>
                 </Modal.Header>

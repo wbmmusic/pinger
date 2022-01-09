@@ -1,6 +1,6 @@
 
 import React, { useState, Fragment, useEffect } from 'react'
-import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Spinner, Table } from 'react-bootstrap'
+import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Table } from 'react-bootstrap'
 import Email from '../Email'
 import StatusTable from './StatusTable'
 
@@ -19,39 +19,18 @@ export default function Top() {
         save: false,
         addresses: [],
         subject: '',
+        location: '',
         processing: false
     }
     const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal)
     const [emailSettingsModal, setEmailSettingsModal] = useState(defaultEmailSettingsModal)
-    const [processingModal, setProcessingModal] = useState(false)
-
-    useEffect(() => {
-        window.electron.receive('emailUpdated', () => setProcessingModal(false))
-
-        return () => {
-            window.electron.removeListener('emailUpdated')
-        }
-    }, [])
-
-    useEffect(() => {
-        setTimeout(() => {
-            if (emailSettingsModal.save === true) {
-                window.electron.ipcRenderer.send('updateEmail', {
-                    addresses: emailSettingsModal.addresses,
-                    subject: emailSettingsModal.subject
-                })
-                closeEmailModal()
-            }
-        }, 100);
-
-    }, [emailSettingsModal])
 
     const createDevice = () => {
         window.electron.ipcRenderer.send('newDevice', newDeviceModal)
         setNewDeviceModal(defaultNewDeviceModal)
     }
 
-    const hideModal = () => setNewDeviceModal(defaultNewDeviceModal)
+    const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal)
 
     const pingAll = () => {
         window.electron.ipcRenderer.invoke('pingAll')
@@ -63,12 +42,12 @@ export default function Top() {
         setEmailSettingsModal(old => ({ ...old, save: false, show: false, processing: true }))
         window.electron.ipcRenderer.invoke('getEmailSettings')
             .then(res => {
-                setProcessingModal(false)
                 setEmailSettingsModal(old => ({
                     ...old,
                     show: true,
                     addresses: res.addresses,
-                    subject: res.subject
+                    subject: res.subject,
+                    location: res.location
                 }))
             })
             .catch(err => console.error(err))
@@ -87,7 +66,6 @@ export default function Top() {
 
     const sendTest = () => console.log("Send Test Email")
 
-    const hideProcessingModal = () => setEmailSettingsModal(old => ({ ...old, processing: false }))
 
     return (
         <Fragment>
@@ -96,8 +74,8 @@ export default function Top() {
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
-                        <NavDropdown title="Email" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={emailSettings}>Settings</NavDropdown.Item>
+                        <NavDropdown title="Settings" id="basic-nav-dropdown">
+                            <NavDropdown.Item onClick={emailSettings}>General</NavDropdown.Item>
                             <NavDropdown.Item onClick={sendTest}>Send Test Email</NavDropdown.Item>
                         </NavDropdown>
                         <NavDropdown title="Devices" id="basic-nav-dropdown">
@@ -113,7 +91,7 @@ export default function Top() {
                 <Email />
                 <Modal
                     show={newDeviceModal.show}
-                    onHide={hideModal}
+                    onHide={hideNewDeviceModal}
                     backdrop="static"
                     keyboard={false}
                 >
@@ -168,7 +146,7 @@ export default function Top() {
                         </Table>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button size="sm" variant="secondary" onClick={hideModal}>
+                        <Button size="sm" variant="secondary" onClick={hideNewDeviceModal}>
                             Cancel
                         </Button>
                         <Button size="sm" variant="primary" onClick={() => createDevice()}>Add Device</Button>
@@ -181,16 +159,27 @@ export default function Top() {
                     keyboard={false}
                 >
                     <Modal.Header closeButton>
-                        <Modal.Title>Email Settings</Modal.Title>
+                        <Modal.Title>General Settings</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
+                        <div><b>Location</b></div>
+                        <FormControl
+                            size="sm"
+                            placeholder="Enter a descriptive location name"
+                            aria-label="Enter a descriptive location name"
+                            aria-describedby="basic-addon2"
+                            type="text"
+                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, location: e.target.value }))}
+                            value={emailSettingsModal.location}
+                        />
+                        <hr />
                         <div><b>Email Subject</b></div>
                         <FormControl
                             size="sm"
                             placeholder="ie. Network Error Detected"
                             aria-label="ie. Network Error Detected"
                             aria-describedby="basic-addon2"
-                            type="email"
+                            type="text"
                             onChange={(e) => setEmailSettingsModal(old => ({ ...old, subject: e.target.value }))}
                             value={emailSettingsModal.subject}
                         />
@@ -207,7 +196,7 @@ export default function Top() {
                                 <InputGroup className="mb-3">
                                     <FormControl
                                         size="sm"
-                                        placeholder="Add Recipient Email"
+                                        placeholder="example@example.com"
                                         aria-label="Add Recipient Email"
                                         aria-describedby="basic-addon2"
                                         type="email"
@@ -247,19 +236,6 @@ export default function Top() {
                         <Button size="sm" variant="secondary" onClick={closeEmailModal}>Close</Button>
                         <Button size="sm" variant="primary" onClick={handleUpdateEmailSettings}>Save Settings</Button>
                     </Modal.Footer>
-                </Modal>
-                <Modal
-                    show={emailSettingsModal.processing}
-                    onHide={hideProcessingModal}
-                    backdrop="static"
-                    keyboard={false}
-                >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Processing</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Spinner size="xl" animation="border" />
-                    </Modal.Body>
                 </Modal>
             </div>
         </Fragment>

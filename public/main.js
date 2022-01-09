@@ -18,7 +18,7 @@ var xyz = []
 
 const pathToUserData = app.getPath('userData')
 let pathToConfig = join(pathToUserData, 'pingConfig.json')
-const emptyConfig = { devices: [], email: { addresses: [], subject: 'Network Issues Have Been Detected!' } }
+const emptyConfig = { devices: [], email: { addresses: [], subject: 'Network Issues Have Been Detected' } }
 
 if (!fs.existsSync(pathToConfig)) {
     fs.writeFileSync(pathToConfig, JSON.stringify(emptyConfig, null, '\t'))
@@ -148,13 +148,13 @@ const mainInit = () => {
         win.webContents.send('devices', getDevices())
     })
 
-    ipcMain.on('deleteDevice', (e, deviceID) => {
+    ipcMain.handle('deleteDevice', (e, deviceID) => {
         console.log('Delete A Device', deviceID)
         let tempFile = getFile()
         let index = tempFile.devices.findIndex(dev => dev.id === deviceID)
         tempFile.devices.splice(index, 1)
         saveFile(tempFile)
-        win.webContents.send('devices', getDevices())
+        return getDevices()
     })
 
     ipcMain.on('newDevice', (e, newDevice) => {
@@ -177,13 +177,12 @@ const mainInit = () => {
 
     ipcMain.on('pingOne', (e, theOne) => pingOne(theOne))
 
-    ipcMain.on('updateEmail', (e, newEmailSettings) => {
+    ipcMain.handle('updateEmail', (e, newEmailSettings) => {
         console.log('Update Email')
         let tempFile = getFile()
         tempFile.email = newEmailSettings
         saveFile(tempFile)
-        emailInfo = newEmailSettings
-        win.webContents.send('emailUpdated')
+        return makeEmail()
     })
 
     ipcMain.handle('getEmailSettings', () => makeEmail())
