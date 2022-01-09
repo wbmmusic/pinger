@@ -96,7 +96,27 @@ const mainInit = () => {
     const makeDevices = () => {
         console.log('Make Devices')
 
-        getFile().devices.forEach(host => {
+        const devices = getFile().devices
+
+        let toBeDeleted = []
+        xyz.forEach(obj => {
+            let exists = false
+            devices.forEach(dev => {
+                if (dev.id === obj.id) exists = true
+            })
+            if (!exists) toBeDeleted.push(obj.id)
+        })
+
+        toBeDeleted.forEach(id => {
+            const delIDX = xyz.find(dev => dev.id === id)
+            if (delIDX !== -1) {
+                xyz[delIDX].clearTimer()
+                xyz[delIDX] = null
+                xyz.splice(delIDX, 1)
+            }
+        })
+
+        devices.forEach(host => {
             const existingIDX = xyz.findIndex(dev => dev.id === host.id)
             if (existingIDX === -1) {
                 xyz.push(new Pingable({
@@ -154,6 +174,7 @@ const mainInit = () => {
         let index = tempFile.devices.findIndex(dev => dev.id === deviceID)
         tempFile.devices.splice(index, 1)
         saveFile(tempFile)
+        makeDevices()
         return getDevices()
     })
 
