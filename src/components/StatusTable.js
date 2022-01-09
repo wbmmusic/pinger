@@ -2,9 +2,7 @@ import React, { Fragment, useEffect, useState } from 'react'
 import { Button, Modal, Table } from 'react-bootstrap'
 
 export default function StatusTable() {
-    const defaultEditDeviceModal = {
-        show: false
-    }
+    const defaultEditDeviceModal = { show: false, device: { name: '' } }
     const [devices, setDevices] = useState([])
     const [editDeviceModal, setEditDeviceModal] = useState(defaultEditDeviceModal)
     const [deleteDeviceModal, setDeleteDeviceModal] = useState(false)
@@ -24,20 +22,20 @@ export default function StatusTable() {
     const handleClose = () => setEditDeviceModal(defaultEditDeviceModal)
 
     const executeDeleteDevice = () => {
-        window.electron.ipcRenderer.send('deleteDevice', editDeviceModal.id)
+        window.electron.ipcRenderer.send('deleteDevice', editDeviceModal.device.id)
         setDeleteDeviceModal(false)
-        setEditDeviceModal(defaultEditDeviceModal)
+        handleClose()
     }
 
     const deleteDevice = () => {
-        setEditDeviceModal(old => ({ ...old, show: false }))
+        handleClose()
         setDeleteDeviceModal(true)
     }
 
     const updateDevice = () => {
-        window.electron.ipcRenderer.send('updateDevice', editDeviceModal)
+        window.electron.ipcRenderer.send('updateDevice', editDeviceModal.device)
         setDeleteDeviceModal(false)
-        setEditDeviceModal(defaultEditDeviceModal)
+        handleClose()
     }
 
     const cancelDelete = () => {
@@ -45,11 +43,11 @@ export default function StatusTable() {
         setEditDeviceModal(old => ({ ...old, show: true }))
     }
 
-    const changeTrys = (value) => setEditDeviceModal(old => ({ ...old, trys: parseInt(value) }))
-    const changeFrequency = (value) => setEditDeviceModal(old => ({ ...old, frequency: parseFloat(value) }))
-    const changeAddress = (theAddress) => setEditDeviceModal(old => ({ ...old, address: theAddress }))
-    const changeName = (theName) => setEditDeviceModal(old => ({ ...old, name: theName }))
-    const changeNotes = (theNotes) => setEditDeviceModal(old => ({ ...old, notes: theNotes }))
+    const changeTrys = (value) => setEditDeviceModal(old => ({ ...old, device: { ...old.device, trys: parseInt(value) } }))
+    const changeFrequency = (value) => setEditDeviceModal(old => ({ ...old, device: { ...old.device, frequency: parseFloat(value) } }))
+    const changeAddress = (theAddress) => setEditDeviceModal(old => ({ ...old, device: { ...old.device, address: theAddress } }))
+    const changeName = (theName) => setEditDeviceModal(old => ({ ...old, device: { ...old.device, name: theName } }))
+    const changeNotes = (theNotes) => setEditDeviceModal(old => ({ ...old, device: { ...old.device, notes: theNotes } }))
 
     const makeRows = () => {
         let rows = []
@@ -74,11 +72,7 @@ export default function StatusTable() {
                     <td style={styles}>
                         <div
                             style={{ display: 'inline-block', cursor: 'pointer' }}
-                            onClick={() => {
-                                let tempXX = { ...devices[i] }
-                                tempXX.show = true
-                                setEditDeviceModal(tempXX)
-                            }}
+                            onClick={() => setEditDeviceModal({ show: true, device: devices[i] })}
                         >
                             ⚙️
                         </div>
@@ -92,7 +86,7 @@ export default function StatusTable() {
     return (
         <Fragment>
             <div>
-                <Table size="sm" hover style={{ userSelect: 'none' }} stripped >
+                <Table striped size="sm" hover style={{ userSelect: 'none' }} >
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -121,7 +115,7 @@ export default function StatusTable() {
                                 <td>
                                     <input
                                         style={{ width: '100%' }}
-                                        type="text" value={editDeviceModal.name}
+                                        type="text" value={editDeviceModal.device.name}
                                         onChange={(e) => changeName(e.target.value)} />
                                 </td>
                             </tr>
@@ -130,7 +124,7 @@ export default function StatusTable() {
                                 <td>
                                     <input
                                         style={{ width: '100%' }}
-                                        type="text" value={editDeviceModal.address}
+                                        type="text" value={editDeviceModal.device.address}
                                         onChange={(e) => changeAddress(e.target.value)} />
                                 </td>
                             </tr>
@@ -139,7 +133,7 @@ export default function StatusTable() {
                                 <td>
                                     <textarea
                                         style={{ width: '100%', fontSize: '12px' }}
-                                        value={editDeviceModal.notes}
+                                        value={editDeviceModal.device.notes}
                                         onChange={(e) => changeNotes(e.target.value)}
                                     />
                                 </td>
@@ -148,14 +142,14 @@ export default function StatusTable() {
                                 <td style={{ textAlign: 'right' }}>Ping Frequency:</td>
                                 <td>
                                     <input type="number" min="15" max="720"
-                                        value={editDeviceModal.frequency}
+                                        value={editDeviceModal.device.frequency}
                                         onChange={(e) => changeFrequency(e.target.value)} />{" Seconds"}
                                 </td>
                             </tr>
                             <tr>
                                 <td style={{ textAlign: 'right' }}>Trys Before Email:</td>
                                 <td><input type="number" min="1" max="100"
-                                    value={editDeviceModal.trys} onChange={(e) => changeTrys(e.target.value)} /></td>
+                                    value={editDeviceModal.device.trys} onChange={(e) => changeTrys(e.target.value)} /></td>
                             </tr>
                         </tbody>
                     </Table>

@@ -1,32 +1,27 @@
 import { useEffect } from 'react';
 import Top from './components/Top'
+import Email from './Email';
 import Updates from './Updates'
-
-declare global {
-  interface Window {
-    electron: any;
-  }
-}
+var ReactDOMServer = require('react-dom/server');
 
 function App() {
 
   useEffect(() => {
-    window.electron.receive('message', (e: object, theMessage: string) => {
-      console.log(theMessage)
-    })
-
-    window.electron.receive('app_version', (event: object, arg: any) => {
-      window.electron.ipcRenderer.removeAllListeners('app_version');
-      document.title = 'nubar-ping --- v' + arg.version;
-    });
+    //window.electron.receive('message', (e, theMessage) => console.log(theMessage))
 
     window.electron.ipcRenderer.send('reactIsReady')
 
+    window.electron.receive('makeEmailBody', () => {
+      console.log("MAKE EMAIL BODY")
+      window.electron.ipcRenderer.send('emailBody', ReactDOMServer.renderToString(<Email />))
+    })
+
     return () => {
-      window.electron.ipcRenderer.removeAllListeners('reactIsReady')
+      window.electron.removeListener('reactIsReady')
+      window.electron.removeListener('message')
+      window.electron.removeListener('makeEmailBody')
     }
   }, [])
-
 
   return (
     <div style={{

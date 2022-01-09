@@ -1,6 +1,7 @@
 
 import React, { useState, Fragment, useEffect } from 'react'
 import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Spinner, Table } from 'react-bootstrap'
+import Email from '../Email'
 import StatusTable from './StatusTable'
 
 export default function Top() {
@@ -14,12 +15,10 @@ export default function Top() {
     }
     const defaultEmailSettingsModal = {
         show: false,
-        provider: '',
-        email: '',
-        password: '',
         newAddress: '',
         save: false,
         addresses: [],
+        subject: '',
         processing: false
     }
     const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal)
@@ -37,12 +36,9 @@ export default function Top() {
     useEffect(() => {
         setTimeout(() => {
             if (emailSettingsModal.save === true) {
-                let thePass = window.electron.cryptr.encrypt(emailSettingsModal.password)
                 window.electron.ipcRenderer.send('updateEmail', {
-                    provider: emailSettingsModal.provider,
-                    email: emailSettingsModal.email,
-                    password: thePass,
-                    addresses: emailSettingsModal.addresses
+                    addresses: emailSettingsModal.addresses,
+                    subject: emailSettingsModal.subject
                 })
                 closeEmailModal()
             }
@@ -71,13 +67,15 @@ export default function Top() {
                 setEmailSettingsModal(old => ({
                     ...old,
                     show: true,
-                    provider: res.provider,
-                    email: res.email,
-                    password: window.electron.cryptr.decrypt(res.password),
-                    addresses: res.addresses
+                    addresses: res.addresses,
+                    subject: res.subject
                 }))
             })
             .catch(err => console.error(err))
+    }
+
+    const deleteEmail = (addy) => {
+        setEmailSettingsModal(old => ({ ...old, addresses: old.addresses.filter(address => address !== addy) }))
     }
 
     const closeEmailModal = () => setEmailSettingsModal(defaultEmailSettingsModal)
@@ -86,6 +84,8 @@ export default function Top() {
         setEmailSettingsModal(old => ({ ...old, save: true, show: false, processing: true }))
         console.log('Handle Update Email Setting')
     }
+
+    const sendTest = () => console.log("Send Test Email")
 
     const hideProcessingModal = () => setEmailSettingsModal(old => ({ ...old, processing: false }))
 
@@ -96,8 +96,9 @@ export default function Top() {
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
-                        <NavDropdown title="Configure" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={emailSettings}>Email Settings</NavDropdown.Item>
+                        <NavDropdown title="Email" id="basic-nav-dropdown">
+                            <NavDropdown.Item onClick={emailSettings}>Settings</NavDropdown.Item>
+                            <NavDropdown.Item onClick={sendTest}>Send Test Email</NavDropdown.Item>
                         </NavDropdown>
                         <NavDropdown title="Devices" id="basic-nav-dropdown">
                             <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
@@ -109,6 +110,7 @@ export default function Top() {
             </Navbar>
             <div style={{ height: '100%', overflowY: 'auto' }}>
                 <StatusTable />
+                <Email />
                 <Modal
                     show={newDeviceModal.show}
                     onHide={hideModal}
@@ -182,112 +184,68 @@ export default function Top() {
                         <Modal.Title>Email Settings</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Table borderless size="sm">
-                            <thead>
-                                <tr>
-                                    <th colSpan="2">Send Email From</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style={labelStyle}>Provider:</td>
-                                    <td>
-                                        <select>
-                                            <option>Hotmail / Outlook</option>
-                                            <option>Gmail</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style={labelStyle}>Email:</td>
-                                    <td>
-                                        <FormControl
-                                            size="sm"
-                                            placeholder="Email Address"
-                                            aria-label="Email Address"
-                                            aria-describedby="basic-addon2"
-                                            type="email"
-                                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, email: e.target.value }))}
-                                            value={emailSettingsModal.email}
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style={labelStyle}>Password:</td>
-                                    <td>
-                                        <FormControl
-                                            size="sm"
-                                            placeholder="Email Account Password"
-                                            aria-label="Email Account Password"
-                                            aria-describedby="basic-addon2"
-                                            type="password"
-                                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, password: e.target.value }))}
-                                            value={emailSettingsModal.password}
-                                        />
-
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <thead>
-                                <tr>
-                                    <th colSpan="2">Send Email To</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style={labelStyle}>Address/s:</td>
-                                    <td>
-                                        <div>
-                                            <Form onSubmit={(e) => {
-                                                e.preventDefault()
-                                                let tempEmailSettingsModal = { ...emailSettingsModal }
-                                                tempEmailSettingsModal.addresses.push(tempEmailSettingsModal.newAddress)
-                                                tempEmailSettingsModal.newAddress = ''
-                                                setEmailSettingsModal(tempEmailSettingsModal)
-                                            }}>
-                                                <InputGroup className="mb-3">
-                                                    <FormControl
-                                                        size="sm"
-                                                        placeholder="Add Recipient Email"
-                                                        aria-label="Add Recipient Email"
-                                                        aria-describedby="basic-addon2"
-                                                        type="email"
-                                                        onChange={(e) => setEmailSettingsModal(old => ({ ...old, newAddress: e.target.value }))}
-                                                        value={emailSettingsModal.newAddress}
-                                                    />
-                                                    <Button size="sm" type="submit" variant="outline-primary">➕</Button>
-                                                </InputGroup>
-                                            </Form>
-                                        </div>
-                                        <div>
-                                            {emailSettingsModal.addresses.map((usr, i) => (
-                                                <div
-                                                    key={'User' + i}
-                                                    style={{
-                                                        display: 'inline-block',
-                                                        fontSize: '12px',
-                                                        backgroundColor: 'lightgray',
-                                                        padding: '2px',
-                                                        marginRight: '3px',
-                                                        marginBottom: '1px',
-                                                        userSelect: 'none'
-                                                    }}
-                                                >
-                                                    {usr}
-                                                    <div style={{ display: 'inline-block', fontSize: '10px', marginLeft: '4px', cursor: 'pointer' }}>
-                                                        ✖️
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </Table>
+                        <div><b>Email Subject</b></div>
+                        <FormControl
+                            size="sm"
+                            placeholder="ie. Network Error Detected"
+                            aria-label="ie. Network Error Detected"
+                            aria-describedby="basic-addon2"
+                            type="email"
+                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, subject: e.target.value }))}
+                            value={emailSettingsModal.subject}
+                        />
+                        <hr />
+                        <div><b>Send To</b></div>
+                        <div>
+                            <Form onSubmit={(e) => {
+                                e.preventDefault()
+                                let tempEmailSettingsModal = { ...emailSettingsModal }
+                                tempEmailSettingsModal.addresses.push(tempEmailSettingsModal.newAddress)
+                                tempEmailSettingsModal.newAddress = ''
+                                setEmailSettingsModal(tempEmailSettingsModal)
+                            }}>
+                                <InputGroup className="mb-3">
+                                    <FormControl
+                                        size="sm"
+                                        placeholder="Add Recipient Email"
+                                        aria-label="Add Recipient Email"
+                                        aria-describedby="basic-addon2"
+                                        type="email"
+                                        onChange={(e) => setEmailSettingsModal(old => ({ ...old, newAddress: e.target.value }))}
+                                        value={emailSettingsModal.newAddress}
+                                    />
+                                    <Button size="sm" type="submit" variant="outline-primary">➕</Button>
+                                </InputGroup>
+                            </Form>
+                        </div>
+                        <div>
+                            {emailSettingsModal.addresses.map((usr, i) => (
+                                <div
+                                    key={'User' + i}
+                                    style={{
+                                        display: 'inline-block',
+                                        fontSize: '12px',
+                                        backgroundColor: 'lightgray',
+                                        padding: '2px',
+                                        marginRight: '3px',
+                                        marginBottom: '1px',
+                                        userSelect: 'none'
+                                    }}
+                                >
+                                    {usr}
+                                    <div
+                                        style={{ display: 'inline-block', fontSize: '10px', marginLeft: '4px', cursor: 'pointer' }}
+                                        onClick={() => deleteEmail(usr)}
+                                    >
+                                        ✖️
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button size="sm" variant="secondary" onClick={closeEmailModal}>Close</Button>
-                        <Button size="sm" variant="primary" onClick={() => handleUpdateEmailSettings()}>Save Settings</Button>
+                        <Button size="sm" variant="primary" onClick={handleUpdateEmailSettings}>Save Settings</Button>
                     </Modal.Footer>
                 </Modal>
                 <Modal

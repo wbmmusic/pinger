@@ -3,30 +3,21 @@ const { join } = require('path')
 const url = require('url')
 
 const { v4: uuid } = require('uuid');
-var ping = require('ping');
-const date = require('date-and-time');
 const fs = require('fs');
 
 const { autoUpdater } = require('electron-updater');
 const { Pingable } = require('./pingable');
+const { sendEmail } = require('./email');
+
+require('./email')
 
 let firstReactInit = true
 const isMac = process.platform === 'darwin'
-var hosts = [];
 var emailInfo;
-var timers = []
 var xyz = []
 
 let pathToConfig
-const emptyConfig = {
-  devices: [],
-  email: {
-    provider: '',
-    email: '',
-    password: '',
-    addresses: []
-  }
-}
+const emptyConfig = { devices: [], email: { addresses: [], subject: 'Network Issues Have Been Detected!' } }
 
 if (isMac) {
 
@@ -47,13 +38,12 @@ if (isMac) {
 
 ////////////////// App Startup ///////////////////////////////////////////////////////////////////
 let win
+exports.win = win
 ////////  SINGLE INSTANCE //////////
 const gotTheLock = app.requestSingleInstanceLock()
-if (!gotTheLock) {
-  app.quit()
-}
+if (!gotTheLock) app.quit()
 
-app.on('second-instance', (event, commandLine, workingDirectory) => {
+app.on('second-instance', () => {
   // Someone tried to run a second instance, we should focus our window.
   if (win) {
     if (win.isMinimized()) win.restore()
@@ -70,7 +60,8 @@ function createWindow() {
     show: false,
     webPreferences: { preload: join(__dirname, 'preload.js') },
     icon: join(__dirname, '/favicon.ico'),
-    autoHideMenuBar: true
+    autoHideMenuBar: true,
+    title: 'nubar Ping v' + app.getVersion()
   })
 
   const startUrl = process.env.ELECTRON_START_URL || url.format({
@@ -89,49 +80,69 @@ function createWindow() {
   win.on('ready-to-show', () => win.show())
 }
 
+const getDevices = () => {
+  let theDevices = []
+  xyz.forEach(dev => theDevices.push({
+    id: dev.id,
+    name: dev.name,
+    address: dev.address,
+    status: dev.status,
+    lastChecked: dev.lastChecked,
+    lastGood: dev.lastGood,
+    notes: dev.notes,
+    frequency: dev.frequency,
+    trys: dev.trys,
+  }))
+  return theDevices
+}
+
+const getFile = () => JSON.parse(fs.readFileSync(pathToConfig))
+const saveFile = (fileData) => fs.writeFileSync(pathToConfig, JSON.stringify(fileData, null, '\t'))
+const makeEmail = () => getFile().email
+exports.emailSettings = () => makeEmail()
+
 const mainInit = () => {
-  const getFile = () => JSON.parse(fs.readFileSync(pathToConfig))
-
-  const saveFile = (fileData) => {
-    console.log('Save File')
-    //console.log(fileData)
-    let file = fs.writeFileSync(pathToConfig, JSON.stringify(fileData, null, '\t'))
-    //console.log(file)
-    return file
-  }
-
-  const makeTimers = () => {
-    hosts.forEach(host => {
-      let timerIndex = timers.findIndex(tmr => tmr.id === host.id)
-      if (timerIndex === -1) timers.push({ id: host.id, timer: null })
-    })
-  }
+  const updateDevices = (name) => win.webContents.send('devices', getDevices())
 
   const makeDevices = () => {
     console.log('Make Devices')
-    hosts = getFile().devices
 
-    for (let i = 0; i < hosts.length; i++) {
-      xyz.push(new Pingable(hosts[i]))
-      hosts[i].status = 'PENDING'
-      hosts[i].lastChecked = null
-      hosts[i].lastGood = null
-      hosts[i].alarm = false
-      hosts[i].misses = 0
-    }
-    win.webContents.send('devices', hosts)
-    makeTimers();
+    getFile().devices.forEach(host => {
+      const existingIDX = xyz.findIndex(dev => dev.id === host.id)
+      if (existingIDX === -1) {
+        xyz.push(new Pingable({
+          ...host,
+          status: 'PENDING',
+          lastChecked: null,
+          lastGood: null,
+          alarm: false,
+          misses: 0,
+          updateDevice: updateDevices
+        }))
+        xyz[xyz.length - 1].ping()
+      } else {
+        const keys = ['name', 'address', 'notes', 'frequency', 'trys']
+        let changed = false
+
+        keys.forEach(key => {
+          if (xyz[existingIDX][key] !== host[key]) {
+            console.log("NO MATCH")
+            xyz[existingIDX][key] = host[key]
+            changed = true
+          } else ("MATCH")
+        })
+
+        if (changed) xyz[existingIDX].ping()
+      }
+    })
+
+    win.webContents.send('devices', getDevices())
   }
 
-  const makeEmail = () => emailInfo = getFile().email
-
-  ipcMain.handle('getDevices', () => {
-    console.log('Got Request For Devices')
-    return hosts
-  })
+  ipcMain.handle('getDevices', () => getDevices())
 
   ipcMain.on('updateDevice', (e, updatedDevice) => {
-    console.log('Update A Device', updatedDevice)
+    console.log('Update A Device')
     let updatedInfo = {
       id: updatedDevice.id,
       name: updatedDevice.name,
@@ -142,34 +153,19 @@ const mainInit = () => {
     }
     let tempFile = getFile()
     let index = tempFile.devices.findIndex(dev => dev.id === updatedDevice.id)
-    let index2 = hosts.findIndex(dev => dev.id === updatedDevice.id)
     tempFile.devices[index] = updatedInfo
     saveFile(tempFile)
-    hosts[index2] = Object.assign(hosts[index2], {
-      ...updatedInfo,
-      status: 'PENDING',
-      lastChecked: null,
-      lastGood: null,
-      alarm: false,
-      misses: 0
-    })
-    win.webContents.send('devices', hosts)
-    pingOne(updatedDevice)
+    makeDevices()
+    win.webContents.send('devices', getDevices())
   })
 
   ipcMain.on('deleteDevice', (e, deviceID) => {
     console.log('Delete A Device', deviceID)
-
     let tempFile = getFile()
     let index = tempFile.devices.findIndex(dev => dev.id === deviceID)
-    let index2 = hosts.findIndex(dev => dev.id === deviceID)
-    let index3 = timers.findIndex(tmr => tmr.id === deviceID)
-    clearTimeout(timers[index3].timer)
-    timers.splice(index3, 1)
-    hosts.splice(index2, 1)
     tempFile.devices.splice(index, 1)
     saveFile(tempFile)
-    win.webContents.send('devices', hosts)
+    win.webContents.send('devices', getDevices())
   })
 
   ipcMain.on('newDevice', (e, newDevice) => {
@@ -184,16 +180,8 @@ const mainInit = () => {
       trys: newDevice.trys
     }
     tempFile.devices.push(tempDevice)
-    hosts.push({
-      ...tempDevice,
-      status: 'PENDING',
-      lastChecked: null,
-      lastGood: null,
-      misses: 0
-    })
     saveFile(tempFile)
-    makeTimers()
-    pingEm()
+    makeDevices()
   })
 
   ipcMain.handle('pingAll', () => pingEm())
@@ -209,57 +197,22 @@ const mainInit = () => {
     win.webContents.send('emailUpdated')
   })
 
-  ipcMain.handle('getEmailSettings', () => emailInfo)
+  ipcMain.handle('getEmailSettings', () => makeEmail())
 
   const pingOne = (host) => {
     // Reset the timer
-    let tmrIdx = timers.findIndex(tmr => tmr.id === host.id)
-    clearTimeout(timers[tmrIdx].timer)
-    timers[tmrIdx].timer = setTimeout(() => {
-      //console.log(host.name, 'Timer Fire')
-      let theHost = hosts.find(hst => hst.id === host.id)
-      pingOne(theHost)
-    }, host.frequency * 1000);
-
-    ping.sys.probe(host.address, function (isAlive) {
-      const rightNow = new Date();
-      const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
-
-      if (isAlive) {
-        //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is alive')
-        let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
-        hosts[theIndex].lastGood = now
-        hosts[theIndex].lastChecked = now
-        hosts[theIndex].status = 'ALIVE'
-        hosts[theIndex].misses = 0
-        win.webContents.send('devices', hosts)
-        if (hosts[theIndex].misses === true) {
-          hosts[theIndex].alarm = false
-          console.log('Send Restored Email here')
-        }
-      } else {
-        //console.log(now + ' host ' + host.name + ' at ' + host.address + ' is dead')
-        let theIndex = hosts.findIndex(aHost => aHost.name === host.name && aHost.address === host.address)
-        hosts[theIndex].lastChecked = now
-        hosts[theIndex].status = 'DEAD'
-        hosts[theIndex].misses = hosts[theIndex].misses + 1
-        win.webContents.send('devices', hosts)
-        if (hosts[theIndex].misses === hosts[theIndex].trys) {
-          console.log('Send Error Email Here')
-        }
-      }
-    });
+    let tmrIdx = xyz.findIndex(tmr => tmr.id === host.id)
+    xyz[tmrIdx].ping()
   }
 
   const pingEm = () => {
     console.log('Pinging all')
-    hosts.forEach(host => pingOne(host))
+    xyz.forEach(host => host.ping())
     return "Pinged All"
   }
 
   makeDevices()
   makeEmail()
-  pingEm()
 }
 
 // Create myWindow, load the rest of the app, etc...
@@ -269,16 +222,13 @@ app.on('ready', () => {
 
     console.log('React Is Ready')
     win.webContents.send('message', 'React Is Ready')
-    win.webContents.send('app_version', { version: app.getVersion() });
 
-    if (firstReactInit === true) {
+    if (firstReactInit) {
       firstReactInit = false
       if (app.isPackaged) {
         win.webContents.send('message', 'App is packaged')
 
-        ipcMain.on('installUpdate', () => {
-          autoUpdater.quitAndInstall(true, true)
-        })
+        ipcMain.on('installUpdate', () => autoUpdater.quitAndInstall(true, true))
 
         autoUpdater.on('checking-for-update', () => win.webContents.send('checkingForUpdates'))
         autoUpdater.on('update-available', () => win.webContents.send('updateAvailable'))
@@ -295,8 +245,13 @@ app.on('ready', () => {
         autoUpdater.checkForUpdatesAndNotify()
       }
 
-    }
 
+      // Send Email Test
+      setTimeout(async () => {
+        //console.log(await sendEmail(() => win.webContents.send('makeEmailBody')))
+      }, 1000);
+
+    }
   })
 
   createWindow()
@@ -305,15 +260,11 @@ app.on('ready', () => {
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  if (process.platform !== 'darwin') app.quit()
 })
 
 app.on('activate', () => {
-  if (win === null) {
-    createWindow()
-  }
+  if (win === null) createWindow()
 })
 
 ////////////////// END App Startup ///////////////////////////////////////////////////////////////
