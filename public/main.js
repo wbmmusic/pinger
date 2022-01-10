@@ -6,10 +6,13 @@ const { v4: uuid } = require('uuid');
 const fs = require('fs');
 
 const { autoUpdater } = require('electron-updater');
+var AutoLaunch = require('auto-launch');
 const { Pingable } = require('./pingable');
 const { sendEmail } = require('./email');
 
 require('./email')
+
+var pingerAutoLauncher = new AutoLaunch({ name: 'Pinger' });
 
 let firstReactInit = true
 const isMac = process.platform === 'darwin'
@@ -228,6 +231,10 @@ const mainInit = () => {
         xyz.forEach(host => host.ping())
         return "Pinged All"
     }
+
+    ipcMain.handle('getAutoLaunchSetting', async() => await pingerAutoLauncher.isEnabled())
+    ipcMain.handle('enableAutoLaunch', async() => await pingerAutoLauncher.enable())
+    ipcMain.handle('disableAutoLaunch', async() => await pingerAutoLauncher.disable())
 
     makeDevices()
     makeEmail()

@@ -13,6 +13,7 @@ export default function Top() {
     const [generalSettingsModal, setGeneralSettingsModal] = useState(defaultGeneralSettingsModal)
     const [ogSettings, setogSettings] = useState(null)
     const [newAddress, setNewAddress] = useState('')
+    const [autoLaunch, setAutoLaunch] = useState(false)
 
     const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal)
     const closeGeneralSettingsModal = () => setGeneralSettingsModal(defaultGeneralSettingsModal)
@@ -62,6 +63,54 @@ export default function Top() {
             .catch(err => console.error(err))
     }
 
+    const makeLaunch = () => {
+        window.electron.ipcRenderer.invoke('getAutoLaunchSetting')
+            .then(res => setAutoLaunch(res))
+            .catch(err => console.error(err))
+    }
+
+    const makeAutoLaunchUI = () => {
+        if (autoLaunch === true) {
+            return (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div>Auto Launch is Enabled</div>
+                    <Button
+                        style={{ marginLeft: '10px' }}
+                        size="sm"
+                        variant="warning"
+                        onClick={() => {
+                            window.electron.ipcRenderer.invoke('disableAutoLaunch')
+                                .then(res => setAutoLaunch(false))
+                                .catch(err => console.error(err))
+                        }}
+                    >Disable Auto Launch</Button>
+                </div>
+            )
+        } else if (autoLaunch === false) {
+            return (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div>Auto Launch is Disabled</div>
+                    <Button
+                    style={{ marginLeft: '10px' }}
+                        size="sm"
+                        variant="success"
+                        onClick={() => {
+                            window.electron.ipcRenderer.invoke('enableAutoLaunch')
+                                .then(res => setAutoLaunch(true))
+                                .catch(err => console.error(err))
+                        }}
+                    >Enable Auto Launch</Button>
+                </div>
+            )
+        } else {
+            return JSON.stringify(autoLaunch)
+        }
+    }
+
+    useEffect(() => {
+        makeLaunch()
+    }, [])
+
     const makeSettingsModal = () => {
         if (generalSettingsModal.show) {
             return (
@@ -75,6 +124,9 @@ export default function Top() {
                         <Modal.Title>General Settings</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
+                        <div><b>Startup</b></div>
+                        {makeAutoLaunchUI()}
+                        <hr />
                         <div><b>Location</b></div>
                         <FormControl
                             size="sm"
