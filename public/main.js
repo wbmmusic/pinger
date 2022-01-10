@@ -50,7 +50,7 @@ function createWindow() {
         webPreferences: { preload: join(__dirname, 'preload.js') },
         icon: join(__dirname, '/favicon.ico'),
         autoHideMenuBar: true,
-        title: 'nubar Ping v' + app.getVersion()
+        title: 'Pinger v' + app.getVersion()
     })
 
     const startUrl = process.env.ELECTRON_START_URL || url.format({
