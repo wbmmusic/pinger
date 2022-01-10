@@ -68,7 +68,11 @@ function createWindow() {
         win.hide()
     })
     win.on('ready-to-show', () => {
-        if (app.getLoginItemSettings().launchItems.args.includes('--autoStart')) return
+        console.log(app.getLoginItemSettings())
+        if (app.getLoginItemSettings().openAtLogin) {
+            console.log("HEREEEE", app.getLoginItemSettings())
+            if (app.getLoginItemSettings().launchItems[0].args.includes('--autoStart')) return
+        }
         win.show()
     })
 
@@ -238,7 +242,7 @@ const mainInit = () => {
         return true
     })
     ipcMain.handle('disableAutoLaunch', async() => {
-        app.setLoginItemSettings({ openAtLogin: false })
+        app.setLoginItemSettings({ openAtLogin: false, args: [] })
         return false
     })
 
