@@ -227,23 +227,24 @@ export default function Top() {
 
     return (
         <Fragment>
-            <Navbar bg="light" expand="sm" >
-                <Navbar.Brand style={{ marginLeft: '8px' }} >nubar-ping</Navbar.Brand>
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="mr-auto">
-                        <NavDropdown title="Settings" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={emailSettings}>General</NavDropdown.Item>
-                            <NavDropdown.Item onClick={sendTest}>Send Test Email</NavDropdown.Item>
-                        </NavDropdown>
-                        <NavDropdown title="Devices" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item onClick={() => setNewDeviceModal({ ...defaultNewDeviceModal, show: true })}>Add Device</NavDropdown.Item>
-                        </NavDropdown>
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
+            <div style={{ borderTop: '1px solid lightGrey' }}>
+                <Navbar bg="light" expand="sm" >
+                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Collapse id="basic-navbar-nav">
+                        <Nav className="mr-auto">
+                            <NavDropdown title="Settings" id="basic-nav-dropdown">
+                                <NavDropdown.Item onClick={emailSettings}>General</NavDropdown.Item>
+                                <NavDropdown.Item onClick={sendTest}>Send Test Email</NavDropdown.Item>
+                            </NavDropdown>
+                            <NavDropdown title="Devices" id="basic-nav-dropdown">
+                                <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
+                                <NavDropdown.Divider />
+                                <NavDropdown.Item onClick={() => setNewDeviceModal({ ...defaultNewDeviceModal, show: true })}>Add Device</NavDropdown.Item>
+                            </NavDropdown>
+                        </Nav>
+                    </Navbar.Collapse>
+                </Navbar>
+            </div>
             <div style={{ height: '100%', overflowY: 'auto' }}>
                 <StatusTable />
                 <Email />
