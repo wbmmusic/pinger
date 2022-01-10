@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
 const { join } = require('path')
 const url = require('url')
 
@@ -27,6 +27,7 @@ if (!fs.existsSync(pathToConfig)) {
 
 ////////////////// App Startup ///////////////////////////////////////////////////////////////////
 let win
+
 exports.win = win
     ////////  SINGLE INSTANCE //////////
 const gotTheLock = app.requestSingleInstanceLock()
@@ -61,12 +62,15 @@ function createWindow() {
     win.loadURL(startUrl);
     //win.maximize()
 
-    mainInit()
+    win.on('close', (e) => {
+        e.preventDefault();
+        win.hide()
+    })
+    win.on('ready-to-show', () => win.show())
+
 
     // Emitted when the window is closed.
-    win.on('closed', () => win = null)
 
-    win.on('ready-to-show', () => win.show())
 }
 
 const getDevices = () => {
@@ -227,49 +231,68 @@ const mainInit = () => {
     makeDevices()
     makeEmail()
 }
+let tray = null
 
 // Create myWindow, load the rest of the app, etc...
 app.on('ready', () => {
-        //log("-APP IS READY");
-        ipcMain.on('reactIsReady', () => {
+    console.log("-APP IS READY");
 
-            console.log('React Is Ready')
-            win.webContents.send('message', 'React Is Ready')
-
-            if (firstReactInit) {
-                firstReactInit = false
-                if (app.isPackaged) {
-                    win.webContents.send('message', 'App is packaged')
-
-                    autoUpdater.on('error', (err) => win.webContents.send('updater', err))
-                    autoUpdater.on('checking-for-update', () => win.webContents.send('updater', "checking-for-update"))
-                    autoUpdater.on('update-available', (info) => win.webContents.send('updater', 'update-available', info))
-                    autoUpdater.on('update-not-available', (info) => win.webContents.send('updater', 'update-not-available', info))
-                    autoUpdater.on('download-progress', (info) => win.webContents.send('updater', 'download-progress', info))
-                    autoUpdater.on('update-downloaded', (info) => win.webContents.send('updater', 'update-downloaded', info))
-
-                    ipcMain.on('installUpdate', () => autoUpdater.quitAndInstall())
-
-                    setTimeout(() => autoUpdater.checkForUpdates(), 3000);
-                    setInterval(() => autoUpdater.checkForUpdates(), 1000 * 60 * 60);
-                }
-
-
-                // Send Email Test
-                setTimeout(async() => {
-                    //console.log(await sendEmail(() => win.webContents.send('makeEmailBody')))
-                }, 1000);
-
+    tray = new Tray(join(__dirname, 'favicon.ico'))
+    const contextMenu = Menu.buildFromTemplate([
+        { label: 'Open', click: () => win.show() },
+        {
+            label: 'Exit',
+            click: () => {
+                tray.destroy()
+                app.exit()
             }
-        })
+        },
+    ])
+    tray.setToolTip('Pinger')
+    tray.setContextMenu(contextMenu)
+    tray.on('click', () => win.show())
 
-        createWindow()
+    ipcMain.on('reactIsReady', () => {
+
+        console.log('React Is Ready')
+        win.webContents.send('message', 'React Is Ready')
+
+        if (firstReactInit) {
+            firstReactInit = false
+            if (app.isPackaged) {
+                win.webContents.send('message', 'App is packaged')
+
+                autoUpdater.on('error', (err) => win.webContents.send('updater', err))
+                autoUpdater.on('checking-for-update', () => win.webContents.send('updater', "checking-for-update"))
+                autoUpdater.on('update-available', (info) => win.webContents.send('updater', 'update-available', info))
+                autoUpdater.on('update-not-available', (info) => win.webContents.send('updater', 'update-not-available', info))
+                autoUpdater.on('download-progress', (info) => win.webContents.send('updater', 'download-progress', info))
+                autoUpdater.on('update-downloaded', (info) => win.webContents.send('updater', 'update-downloaded', info))
+
+                ipcMain.on('installUpdate', () => autoUpdater.quitAndInstall())
+
+                setTimeout(() => autoUpdater.checkForUpdates(), 3000);
+                setInterval(() => autoUpdater.checkForUpdates(), 1000 * 60 * 60);
+            }
+
+
+            // Send Email Test
+            setTimeout(async() => {
+                //console.log(await sendEmail(() => win.webContents.send('makeEmailBody')))
+            }, 1000);
+
+        }
     })
-    ///////////////////////
+
+    createWindow()
+    mainInit()
+
+
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
+    //if (process.platform !== 'darwin') app.quit()
 })
 
 app.on('activate', () => {
