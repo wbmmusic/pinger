@@ -107,8 +107,9 @@ const mainInit = () => {
             if (!exists) toBeDeleted.push(obj.id)
         })
 
+
         toBeDeleted.forEach(id => {
-            const delIDX = xyz.find(dev => dev.id === id)
+            const delIDX = xyz.findIndex(dev => dev.id === id)
             if (delIDX !== -1) {
                 xyz[delIDX].clearTimer()
                 xyz[delIDX] = null
@@ -172,10 +173,13 @@ const mainInit = () => {
         console.log('Delete A Device', deviceID)
         let tempFile = getFile()
         let index = tempFile.devices.findIndex(dev => dev.id === deviceID)
-        tempFile.devices.splice(index, 1)
-        saveFile(tempFile)
-        makeDevices()
-        return getDevices()
+        if (index !== -1) {
+            tempFile.devices.splice(index, 1)
+            saveFile(tempFile)
+            makeDevices()
+            return "Deleted"
+        }
+        return "Didnt Find Device to Delete"
     })
 
     ipcMain.on('newDevice', (e, newDevice) => {

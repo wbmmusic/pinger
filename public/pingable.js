@@ -25,7 +25,7 @@ class Pingable {
                 this.lastChecked = now
                 this.status = 'ALIVE'
                 this.misses = 0
-                //win.webContents.send('devices', hosts)
+                    //win.webContents.send('devices', hosts)
                 this.updateDevice(this.name)
                 if (this.misses === true) {
                     this.alarm = false
@@ -36,7 +36,7 @@ class Pingable {
                 this.lastChecked = now
                 this.status = 'DEAD'
                 this.misses = this.misses + 1
-                //win.webContents.send('devices', hosts)
+                    //win.webContents.send('devices', hosts)
                 this.updateDevice(this.name)
                 if (this.misses === this.trys) {
                     console.log('Send Error Email Here')
@@ -50,8 +50,6 @@ class Pingable {
             this.timer = null
         }
     }
-
-
 }
 
 exports.Pingable = Pingable;

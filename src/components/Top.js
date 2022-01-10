@@ -3,34 +3,25 @@ import React, { useState, Fragment, useEffect } from 'react'
 import { Button, Form, FormControl, InputGroup, Modal, Nav, Navbar, NavDropdown, Table } from 'react-bootstrap'
 import Email from '../Email'
 import StatusTable from './StatusTable'
+import PersonAddAlt1TwoToneIcon from '@mui/icons-material/PersonAddAlt1TwoTone';
+import PersonOffTwoToneIcon from '@mui/icons-material/PersonOffTwoTone';
 
 export default function Top() {
-    const defaultNewDeviceModal = {
-        show: false,
-        name: '',
-        address: '',
-        notes: '',
-        frequency: 10,
-        trys: 3
-    }
-    const defaultEmailSettingsModal = {
-        show: false,
-        newAddress: '',
-        save: false,
-        addresses: [],
-        subject: '',
-        location: '',
-        processing: false
-    }
+    const defaultNewDeviceModal = { show: false, name: '', address: '', notes: '', frequency: 10, trys: 3 }
+    const defaultGeneralSettingsModal = { show: false, settings: { addresses: [], subject: '', location: '', } }
     const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal)
-    const [emailSettingsModal, setEmailSettingsModal] = useState(defaultEmailSettingsModal)
+    const [generalSettingsModal, setGeneralSettingsModal] = useState(defaultGeneralSettingsModal)
+    const [ogSettings, setogSettings] = useState(null)
+    const [newAddress, setNewAddress] = useState('')
+
+    const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal)
+    const closeGeneralSettingsModal = () => setGeneralSettingsModal(defaultGeneralSettingsModal)
+    const sendTest = () => console.log("Send Test Email")
 
     const createDevice = () => {
         window.electron.ipcRenderer.send('newDevice', newDeviceModal)
-        setNewDeviceModal(defaultNewDeviceModal)
+        hideNewDeviceModal()
     }
-
-    const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal)
 
     const pingAll = () => {
         window.electron.ipcRenderer.invoke('pingAll')
@@ -38,57 +29,135 @@ export default function Top() {
             .catch(err => console.error(err))
     }
 
+    const isSavable = () => {
+        if (JSON.stringify(ogSettings) !== JSON.stringify(generalSettingsModal.settings)) return true
+        return false
+    }
+
     const emailSettings = () => {
-        setEmailSettingsModal(old => ({ ...old, save: false, show: false, processing: true }))
+        setGeneralSettingsModal(old => ({ ...old, save: false, show: false, processing: true }))
         window.electron.ipcRenderer.invoke('getEmailSettings')
             .then(res => {
-                setEmailSettingsModal(old => ({
-                    ...old,
-                    show: true,
-                    addresses: res.addresses,
-                    subject: res.subject,
-                    location: res.location
-                }))
+                //console.log(res)
+                setGeneralSettingsModal({ show: true, settings: { ...res } })
+                setogSettings(JSON.parse(JSON.stringify(res)))
             })
             .catch(err => console.error(err))
     }
 
     const deleteEmail = (addy) => {
-        setEmailSettingsModal(old => ({ ...old, addresses: old.addresses.filter(address => address !== addy) }))
+        setGeneralSettingsModal(old => ({
+            ...old,
+            settings: {
+                ...old.settings,
+                addresses: old.settings.addresses.filter(address => address !== addy)
+            }
+        }))
     }
 
-    const closeEmailModal = () => setEmailSettingsModal(defaultEmailSettingsModal)
-
-    const handleUpdateEmailSettings = () => {
-        setEmailSettingsModal(old => ({ ...old, save: true, show: false, processing: true }))
-        console.log('Handle Update Email Setting')
+    const updateGeneralSettings = () => {
+        //console.log('Handle Update Email Setting', generalSettingsModal.settings)
+        window.electron.ipcRenderer.invoke('updateEmail', generalSettingsModal.settings)
+            .then(res => closeGeneralSettingsModal())
+            .catch(err => console.error(err))
     }
 
-    const sendTest = () => console.log("Send Test Email")
+    const makeSettingsModal = () => {
+        if (generalSettingsModal.show) {
+            return (
+                <Modal
+                    show={generalSettingsModal.show}
+                    onHide={closeGeneralSettingsModal}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton>
+                        <Modal.Title>General Settings</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div><b>Location</b></div>
+                        <FormControl
+                            size="sm"
+                            placeholder="Enter a descriptive location name"
+                            aria-label="Enter a descriptive location name"
+                            aria-describedby="basic-addon2"
+                            type="text"
+                            onChange={(e) => setGeneralSettingsModal(old => ({ ...old, settings: { ...old.settings, location: e.target.value } }))}
+                            value={generalSettingsModal.settings.location}
+                        />
+                        <hr />
+                        <div><b>Email Subject</b></div>
+                        <FormControl
+                            size="sm"
+                            placeholder="ie. Network Error Detected"
+                            aria-label="ie. Network Error Detected"
+                            aria-describedby="basic-addon2"
+                            type="text"
+                            onChange={(e) => setGeneralSettingsModal(old => ({ ...old, settings: { ...old.settings, subject: e.target.value } }))}
+                            value={generalSettingsModal.settings.subject}
+                        />
+                        <hr />
+                        <div><b>Send To</b></div>
+                        <div>
+                            <Form onSubmit={(e) => {
+                                e.preventDefault()
+                                setGeneralSettingsModal(old => ({ ...old, settings: { ...old.settings, addresses: [...old.settings.addresses, newAddress] } }))
+                                setNewAddress('')
+                            }}>
+                                <InputGroup className="mb-3">
+                                    <FormControl
+                                        size="sm"
+                                        placeholder="example@example.com"
+                                        aria-label="Add Recipient Email"
+                                        aria-describedby="basic-addon2"
+                                        type="email"
+                                        onChange={(e) => setNewAddress(e.target.value)}
+                                        value={newAddress}
+                                    />
+                                    <Button size="sm" type="submit" variant="outline-primary"><PersonAddAlt1TwoToneIcon /></Button>
+                                </InputGroup>
+                            </Form>
+                        </div>
+                        <div>
+                            {generalSettingsModal.settings.addresses.map((usr, i) => (
+                                <div
+                                    key={`emailAddress ${i}`}
+                                    style={{
+                                        display: 'inline-block',
+                                        marginRight: '3px',
+                                        marginBottom: '1px',
+                                        userSelect: 'none',
+                                        backgroundColor: 'lightgray',
+                                        padding: '4px',
+                                        borderRadius: '2px'
+                                    }}
+                                >
+                                    <div
+                                        key={'User' + i}
+                                        style={{ display: 'flex', fontSize: '12px', alignItems: 'center' }}
+                                    >
+                                        {usr}
+                                        <div
+                                            style={{ display: 'inline-block', fontSize: '10px', marginLeft: '4px', cursor: 'pointer' }}
+                                            onClick={() => deleteEmail(usr)}
+                                        ><PersonOffTwoToneIcon style={{ fontSize: '16px' }} /></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button size="sm" variant="secondary" onClick={closeGeneralSettingsModal}>Close</Button>
+                        <Button disabled={!isSavable()} size="sm" variant="primary" onClick={updateGeneralSettings}>Save Settings</Button>
+                    </Modal.Footer>
+                </Modal>
+            )
+        }
+    }
 
-
-    return (
-        <Fragment>
-            <Navbar bg="light" expand="sm" >
-                <Navbar.Brand style={{ marginLeft: '8px' }} >nubar-ping</Navbar.Brand>
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="mr-auto">
-                        <NavDropdown title="Settings" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={emailSettings}>General</NavDropdown.Item>
-                            <NavDropdown.Item onClick={sendTest}>Send Test Email</NavDropdown.Item>
-                        </NavDropdown>
-                        <NavDropdown title="Devices" id="basic-nav-dropdown">
-                            <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item onClick={() => setNewDeviceModal({ ...defaultNewDeviceModal, show: true })}>Add Device</NavDropdown.Item>
-                        </NavDropdown>
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
-            <div style={{ height: '100%', overflowY: 'auto' }}>
-                <StatusTable />
-                <Email />
+    const makeNewDeviceModal = () => {
+        if (newDeviceModal.show) {
+            return (
                 <Modal
                     show={newDeviceModal.show}
                     onHide={hideNewDeviceModal}
@@ -152,91 +221,34 @@ export default function Top() {
                         <Button size="sm" variant="primary" onClick={() => createDevice()}>Add Device</Button>
                     </Modal.Footer>
                 </Modal>
-                <Modal
-                    show={emailSettingsModal.show}
-                    onHide={closeEmailModal}
-                    backdrop="static"
-                    keyboard={false}
-                >
-                    <Modal.Header closeButton>
-                        <Modal.Title>General Settings</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <div><b>Location</b></div>
-                        <FormControl
-                            size="sm"
-                            placeholder="Enter a descriptive location name"
-                            aria-label="Enter a descriptive location name"
-                            aria-describedby="basic-addon2"
-                            type="text"
-                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, location: e.target.value }))}
-                            value={emailSettingsModal.location}
-                        />
-                        <hr />
-                        <div><b>Email Subject</b></div>
-                        <FormControl
-                            size="sm"
-                            placeholder="ie. Network Error Detected"
-                            aria-label="ie. Network Error Detected"
-                            aria-describedby="basic-addon2"
-                            type="text"
-                            onChange={(e) => setEmailSettingsModal(old => ({ ...old, subject: e.target.value }))}
-                            value={emailSettingsModal.subject}
-                        />
-                        <hr />
-                        <div><b>Send To</b></div>
-                        <div>
-                            <Form onSubmit={(e) => {
-                                e.preventDefault()
-                                let tempEmailSettingsModal = { ...emailSettingsModal }
-                                tempEmailSettingsModal.addresses.push(tempEmailSettingsModal.newAddress)
-                                tempEmailSettingsModal.newAddress = ''
-                                setEmailSettingsModal(tempEmailSettingsModal)
-                            }}>
-                                <InputGroup className="mb-3">
-                                    <FormControl
-                                        size="sm"
-                                        placeholder="example@example.com"
-                                        aria-label="Add Recipient Email"
-                                        aria-describedby="basic-addon2"
-                                        type="email"
-                                        onChange={(e) => setEmailSettingsModal(old => ({ ...old, newAddress: e.target.value }))}
-                                        value={emailSettingsModal.newAddress}
-                                    />
-                                    <Button size="sm" type="submit" variant="outline-primary">➕</Button>
-                                </InputGroup>
-                            </Form>
-                        </div>
-                        <div>
-                            {emailSettingsModal.addresses.map((usr, i) => (
-                                <div
-                                    key={'User' + i}
-                                    style={{
-                                        display: 'inline-block',
-                                        fontSize: '12px',
-                                        backgroundColor: 'lightgray',
-                                        padding: '2px',
-                                        marginRight: '3px',
-                                        marginBottom: '1px',
-                                        userSelect: 'none'
-                                    }}
-                                >
-                                    {usr}
-                                    <div
-                                        style={{ display: 'inline-block', fontSize: '10px', marginLeft: '4px', cursor: 'pointer' }}
-                                        onClick={() => deleteEmail(usr)}
-                                    >
-                                        ✖️
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button size="sm" variant="secondary" onClick={closeEmailModal}>Close</Button>
-                        <Button size="sm" variant="primary" onClick={handleUpdateEmailSettings}>Save Settings</Button>
-                    </Modal.Footer>
-                </Modal>
+            )
+        }
+    }
+
+    return (
+        <Fragment>
+            <Navbar bg="light" expand="sm" >
+                <Navbar.Brand style={{ marginLeft: '8px' }} >nubar-ping</Navbar.Brand>
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav className="mr-auto">
+                        <NavDropdown title="Settings" id="basic-nav-dropdown">
+                            <NavDropdown.Item onClick={emailSettings}>General</NavDropdown.Item>
+                            <NavDropdown.Item onClick={sendTest}>Send Test Email</NavDropdown.Item>
+                        </NavDropdown>
+                        <NavDropdown title="Devices" id="basic-nav-dropdown">
+                            <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item onClick={() => setNewDeviceModal({ ...defaultNewDeviceModal, show: true })}>Add Device</NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
+                </Navbar.Collapse>
+            </Navbar>
+            <div style={{ height: '100%', overflowY: 'auto' }}>
+                <StatusTable />
+                <Email />
+                {makeNewDeviceModal()}
+                {makeSettingsModal()}
             </div>
         </Fragment>
     )

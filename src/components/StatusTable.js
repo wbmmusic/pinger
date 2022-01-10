@@ -1,5 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react'
 import { Button, Modal, Table } from 'react-bootstrap'
+import SettingsTwoToneIcon from '@mui/icons-material/SettingsTwoTone';
 
 export default function StatusTable() {
     const defaultEditDeviceModal = { show: false, device: { name: '' } }
@@ -23,9 +24,10 @@ export default function StatusTable() {
     const handleClose = () => setEditDeviceModal(defaultEditDeviceModal)
 
     const executeDeleteDevice = () => {
-        console.log(editDeviceModal.device.id)
+        console.log(deleteDeviceModal.id)
         window.electron.ipcRenderer.invoke('deleteDevice', deleteDeviceModal.id)
             .then(res => {
+                console.log(res)
                 setDeleteDeviceModal(defaultDeleteDeviceModal)
                 handleClose()
             })
@@ -81,13 +83,96 @@ export default function StatusTable() {
                             style={{ display: 'inline-block', cursor: 'pointer' }}
                             onClick={() => setEditDeviceModal({ show: true, device: devices[i] })}
                         >
-                            ⚙️
+                            <SettingsTwoToneIcon />
                         </div>
                     </td>
                 </tr>
             )
         }
         return rows
+    }
+
+    const makeDeleteDeviceModal = () => {
+        if (deleteDeviceModal.show) {
+            return (
+                <Modal show={deleteDeviceModal.show} onHide={cancelDelete}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Confirm Delete Device</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        Are You sure you want to delete this device?
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button size="sm" variant="secondary" onClick={cancelDelete}>Cancel</Button>
+                        <Button size="sm" variant="danger" onClick={executeDeleteDevice}>Delete</Button>
+                    </Modal.Footer>
+                </Modal>
+            )
+        }
+    }
+
+    const makeEditDeviceModal = () => {
+        if (editDeviceModal.show) {
+            return (
+                <Modal show={editDeviceModal.show} onHide={handleClose}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Edit Device</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Table borderless size="sm">
+                            <tbody>
+                                <tr>
+                                    <td style={{ textAlign: 'right' }}>Name:</td>
+                                    <td>
+                                        <input
+                                            style={{ width: '100%' }}
+                                            type="text" value={editDeviceModal.device.name}
+                                            onChange={(e) => changeName(e.target.value)} />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ textAlign: 'right' }}>Address:</td>
+                                    <td>
+                                        <input
+                                            style={{ width: '100%' }}
+                                            type="text" value={editDeviceModal.device.address}
+                                            onChange={(e) => changeAddress(e.target.value)} />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ textAlign: 'right' }}>Notes:</td>
+                                    <td>
+                                        <textarea
+                                            style={{ width: '100%', fontSize: '12px' }}
+                                            value={editDeviceModal.device.notes}
+                                            onChange={(e) => changeNotes(e.target.value)}
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ textAlign: 'right' }}>Ping Frequency:</td>
+                                    <td>
+                                        <input type="number" min="15" max="720"
+                                            value={editDeviceModal.device.frequency}
+                                            onChange={(e) => changeFrequency(e.target.value)} />{" Seconds"}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ textAlign: 'right' }}>Trys Before Email:</td>
+                                    <td><input type="number" min="1" max="100"
+                                        value={editDeviceModal.device.trys} onChange={(e) => changeTrys(e.target.value)} /></td>
+                                </tr>
+                            </tbody>
+                        </Table>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button size="sm" variant="danger" onClick={deleteDevice}>Delete Device</Button>
+                        <Button size="sm" variant="secondary" onClick={handleClose}>Close</Button>
+                        <Button size="sm" variant="primary" onClick={updateDevice}>Save Changes</Button>
+                    </Modal.Footer>
+                </Modal>
+            )
+        }
     }
 
     return (
@@ -110,75 +195,8 @@ export default function StatusTable() {
                     </tbody>
                 </Table>
             </div>
-            <Modal show={editDeviceModal.show} onHide={handleClose}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Device</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Table borderless size="sm">
-                        <tbody>
-                            <tr>
-                                <td style={{ textAlign: 'right' }}>Name:</td>
-                                <td>
-                                    <input
-                                        style={{ width: '100%' }}
-                                        type="text" value={editDeviceModal.device.name}
-                                        onChange={(e) => changeName(e.target.value)} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ textAlign: 'right' }}>Address:</td>
-                                <td>
-                                    <input
-                                        style={{ width: '100%' }}
-                                        type="text" value={editDeviceModal.device.address}
-                                        onChange={(e) => changeAddress(e.target.value)} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ textAlign: 'right' }}>Notes:</td>
-                                <td>
-                                    <textarea
-                                        style={{ width: '100%', fontSize: '12px' }}
-                                        value={editDeviceModal.device.notes}
-                                        onChange={(e) => changeNotes(e.target.value)}
-                                    />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ textAlign: 'right' }}>Ping Frequency:</td>
-                                <td>
-                                    <input type="number" min="15" max="720"
-                                        value={editDeviceModal.device.frequency}
-                                        onChange={(e) => changeFrequency(e.target.value)} />{" Seconds"}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ textAlign: 'right' }}>Trys Before Email:</td>
-                                <td><input type="number" min="1" max="100"
-                                    value={editDeviceModal.device.trys} onChange={(e) => changeTrys(e.target.value)} /></td>
-                            </tr>
-                        </tbody>
-                    </Table>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button size="sm" variant="danger" onClick={deleteDevice}>Delete Device</Button>
-                    <Button size="sm" variant="secondary" onClick={handleClose}>Close</Button>
-                    <Button size="sm" variant="primary" onClick={updateDevice}>Save Changes</Button>
-                </Modal.Footer>
-            </Modal>
-            <Modal show={deleteDeviceModal.show} onHide={cancelDelete}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirm Delete Device</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    Are You sure you want to delete this device?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button size="sm" variant="secondary" onClick={cancelDelete}>Cancel</Button>
-                    <Button size="sm" variant="danger" onClick={executeDeleteDevice}>Delete</Button>
-                </Modal.Footer>
-            </Modal>
+            {makeEditDeviceModal()}
+            {makeDeleteDeviceModal()}
         </Fragment>
     )
 }

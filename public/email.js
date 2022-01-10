@@ -12,8 +12,7 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-
-transporter.verify(function (error, success) {
+transporter.verify(function(error, success) {
     if (error) {
         console.log(error);
     } else {
@@ -21,11 +20,11 @@ transporter.verify(function (error, success) {
     }
 });
 
-exports.getEmailHtml = async (send) => {
+exports.getEmailHtml = async(send) => {
     return new Promise((resolve, reject) => {
         ipcMain.once('emailBody', (e, x) => {
             console.log("Received Body")
-            //console.log(x)
+                //console.log(x)
             resolve(x)
         })
         console.log("===>>> SEND")
@@ -33,9 +32,9 @@ exports.getEmailHtml = async (send) => {
     })
 }
 
-exports.sendEmail = async (send) => {
+exports.sendEmail = async(send) => {
     console.log("Sending Email")
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const eSettings = idx.emailSettings()
         console.log(eSettings)
 
@@ -57,9 +56,7 @@ exports.sendEmail = async (send) => {
     })
 }
 
-const main = async () => {
+const main = async() => {
     console.log("-->> Senging EMAIL")
     console.log(await this.sendEmail())
 }
-
-
