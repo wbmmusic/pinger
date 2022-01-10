@@ -68,11 +68,8 @@ function createWindow() {
         win.hide()
     })
     win.on('ready-to-show', () => {
-        console.log(app.getLoginItemSettings())
-        if (app.getLoginItemSettings().openAtLogin) {
-            console.log("HEREEEE", app.getLoginItemSettings())
-            if (app.getLoginItemSettings().launchItems[0].args.includes('--autoStart')) return
-        }
+        console.log("HEREEEE", app.getLoginItemSettings())
+        if (app.getLoginItemSettings().wasOpenedAtLogin) return
         win.show()
     })
 
@@ -236,14 +233,20 @@ const mainInit = () => {
         return "Pinged All"
     }
 
-    ipcMain.handle('getAutoLaunchSetting', async() => app.getLoginItemSettings().openAtLogin)
+    ipcMain.handle('getAutoLaunchSetting', async() => {
+        console.log("IN DIS BITCH")
+        console.log(app.getLoginItemSettings())
+        return app.getLoginItemSettings().executableWillLaunchAtLogin
+    })
     ipcMain.handle('enableAutoLaunch', async() => {
-        app.setLoginItemSettings({ openAtLogin: true, args: ['--autoStart'] })
-        return true
+        app.setLoginItemSettings({ openAtLogin: true, args: ["--autoStart"] })
+        console.log(app.getLoginItemSettings())
+        return app.getLoginItemSettings().executableWillLaunchAtLogin
     })
     ipcMain.handle('disableAutoLaunch', async() => {
-        app.setLoginItemSettings({ openAtLogin: false, args: [] })
-        return false
+        app.setLoginItemSettings({ openAtLogin: false })
+        console.log(app.getLoginItemSettings())
+        return app.getLoginItemSettings().executableWillLaunchAtLogin
     })
 
     makeDevices()
