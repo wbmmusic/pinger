@@ -68,7 +68,7 @@ function createWindow() {
         win.hide()
     })
     win.on('ready-to-show', () => {
-        if (app.getLoginItemSettings().wasOpenedAtLogin) return
+        if (app.getLoginItemSettings().launchItems.args.includes('--autoStart')) return
         win.show()
     })
 
@@ -234,7 +234,7 @@ const mainInit = () => {
 
     ipcMain.handle('getAutoLaunchSetting', async() => app.getLoginItemSettings().openAtLogin)
     ipcMain.handle('enableAutoLaunch', async() => {
-        app.setLoginItemSettings({ openAtLogin: true })
+        app.setLoginItemSettings({ openAtLogin: true, args: ['--autoStart'] })
         return true
     })
     ipcMain.handle('disableAutoLaunch', async() => {
