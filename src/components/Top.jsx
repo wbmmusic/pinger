@@ -80,7 +80,7 @@ export default function Top() {
                         variant="warning"
                         onClick={() => {
                             window.electron.ipcRenderer.invoke('disableAutoLaunch')
-                                .then(res => setAutoLaunch(false))
+                                .then(res => setAutoLaunch(res))
                                 .catch(err => console.error(err))
                         }}
                     >Disable Auto Launch</Button>
@@ -91,12 +91,12 @@ export default function Top() {
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <div>Auto Launch is Disabled</div>
                     <Button
-                    style={{ marginLeft: '10px' }}
+                        style={{ marginLeft: '10px' }}
                         size="sm"
                         variant="success"
                         onClick={() => {
                             window.electron.ipcRenderer.invoke('enableAutoLaunch')
-                                .then(res => setAutoLaunch(true))
+                                .then(res => setAutoLaunch(res))
                                 .catch(err => console.error(err))
                         }}
                     >Enable Auto Launch</Button>

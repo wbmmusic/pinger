@@ -6,13 +6,10 @@ const { v4: uuid } = require('uuid');
 const fs = require('fs');
 
 const { autoUpdater } = require('electron-updater');
-var AutoLaunch = require('auto-launch');
 const { Pingable } = require('./pingable');
 const { sendEmail } = require('./email');
 
 require('./email')
-
-var pingerAutoLauncher = new AutoLaunch({ name: 'Pinger' });
 
 let firstReactInit = true
 const isMac = process.platform === 'darwin'
@@ -70,7 +67,10 @@ function createWindow() {
         e.preventDefault();
         win.hide()
     })
-    win.on('ready-to-show', () => win.show())
+    win.on('ready-to-show', () => {
+        if (app.getLoginItemSettings().wasOpenedAtLogin) return
+        win.show()
+    })
 
 
     // Emitted when the window is closed.
@@ -232,9 +232,15 @@ const mainInit = () => {
         return "Pinged All"
     }
 
-    ipcMain.handle('getAutoLaunchSetting', async() => await pingerAutoLauncher.isEnabled())
-    ipcMain.handle('enableAutoLaunch', async() => await pingerAutoLauncher.enable())
-    ipcMain.handle('disableAutoLaunch', async() => await pingerAutoLauncher.disable())
+    ipcMain.handle('getAutoLaunchSetting', async() => app.getLoginItemSettings().openAtLogin)
+    ipcMain.handle('enableAutoLaunch', async() => {
+        app.setLoginItemSettings({ openAtLogin: true })
+        return true
+    })
+    ipcMain.handle('disableAutoLaunch', async() => {
+        app.setLoginItemSettings({ openAtLogin: false })
+        return false
+    })
 
     makeDevices()
     makeEmail()
