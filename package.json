@@ -1,5 +1,5 @@
 {
-    "name": "nubar-ping",
+    "name": "pinger",
     "version": "0.0.23",
     "private": true,
     "dependencies": {
@@ -71,8 +71,8 @@
     "homepage": "./",
     "main": "public/main.js",
     "build": {
-        "productName": "nubar-ping",
-        "appId": "com.wbm.nubar-ping",
+        "productName": "Pinger",
+        "appId": "com.wbm.pinger",
         "copyright": "WBM Tek",
         "extends": null,
         "files": [
@@ -85,6 +85,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/wbmmusic/nubar-ping.git"
+        "url": "https://github.com/wbmmusic/pinger.git"
     }
 }
