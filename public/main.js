@@ -13,7 +13,6 @@ require('./email')
 
 let firstReactInit = true
 const isMac = process.platform === 'darwin'
-var emailInfo;
 var xyz = []
 
 const pathToUserData = app.getPath('userData')
@@ -27,15 +26,17 @@ if (!fs.existsSync(pathToConfig)) {
 
 ////////////////// App Startup ///////////////////////////////////////////////////////////////////
 let win
+let tray = null
 
 exports.win = win
     ////////  SINGLE INSTANCE //////////
 const gotTheLock = app.requestSingleInstanceLock()
-if (!gotTheLock) app.quit()
+if (!gotTheLock) app.exit()
 
 app.on('second-instance', () => {
         // Someone tried to run a second instance, we should focus our window.
         if (win) {
+            win.show()
             if (win.isMinimized()) win.restore()
             win.focus()
         }
@@ -231,11 +232,11 @@ const mainInit = () => {
     makeDevices()
     makeEmail()
 }
-let tray = null
+
 
 // Create myWindow, load the rest of the app, etc...
 app.on('ready', () => {
-    console.log("-APP IS READY");
+    console.log("APP IS READY");
 
     tray = new Tray(join(__dirname, 'favicon.ico'))
     const contextMenu = Menu.buildFromTemplate([
@@ -286,13 +287,6 @@ app.on('ready', () => {
 
     createWindow()
     mainInit()
-
-
-})
-
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-    //if (process.platform !== 'darwin') app.quit()
 })
 
 app.on('activate', () => {
