@@ -129,7 +129,7 @@ export default function Top() {
                                         userSelect: 'none',
                                         backgroundColor: 'lightgray',
                                         padding: '4px',
-                                        borderRadius: '2px'
+                                        borderRadius: '2px' 
                                     }}
                                 >
                                     <div
