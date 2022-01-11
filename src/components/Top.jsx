@@ -8,13 +8,14 @@ import PersonOffTwoToneIcon from '@mui/icons-material/PersonOffTwoTone';
 
 export default function Top() {
     const defaultNewDeviceModal = { show: false, name: '', address: '', notes: '', frequency: 10, trys: 3 }
-    const defaultGeneralSettingsModal = { show: false, settings: { addresses: [], subject: '', location: '', } }
+    const defaultGeneralSettingsModal = { show: false, settings: { addresses: [], subject: '', location: '' } }
     const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal)
     const [generalSettingsModal, setGeneralSettingsModal] = useState(defaultGeneralSettingsModal)
     const [ogSettings, setogSettings] = useState(null)
     const [newAddress, setNewAddress] = useState('')
     const [autoLaunch, setAutoLaunch] = useState(false)
     const [closeWindowModal, setCloseWindowModal] = useState({ show: false })
+    const [muteCloseWin, setMuteCloseWin] = useState(false)
 
     const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal)
     const closeGeneralSettingsModal = () => setGeneralSettingsModal(defaultGeneralSettingsModal)
@@ -110,6 +111,9 @@ export default function Top() {
 
     useEffect(() => {
         makeLaunch()
+        window.electron.ipcRenderer.invoke('getCloseWindowWarningMute')
+            .then(res => setMuteCloseWin(res))
+            .catch(err => console.error(err))
         window.electron.receive('showCloseWarning', () => setCloseWindowModal({ show: true }))
         return () => window.electron.removeListener('showCloseWarning')
     }, [])
@@ -297,6 +301,12 @@ export default function Top() {
             .catch(err => console.error(err))
     }
 
+    const handleCloseWindowWarinigMute = (e) => {
+        window.electron.ipcRenderer.invoke('setCloseWindowWarningMute', e.target.checked)
+            .then(res => setMuteCloseWin(res))
+            .catch(err => console.error(err))
+    }
+
     const makeCloseWindowModal = () => {
         if (closeWindowModal.show) {
             return (
@@ -313,7 +323,7 @@ export default function Top() {
                         <div>Closing this window does not close Pinger.</div>
                         <div>To fully close pinger click the "Stop Pinger" button.</div>
                         <div style={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
-                            <input type="checkbox" />
+                            <input checked={muteCloseWin} type="checkbox" onChange={handleCloseWindowWarinigMute} />
                             <div style={{ paddingLeft: '10px' }} >Always run in background and do not show this warning again</div>
                         </div>
                     </Modal.Body>

@@ -18,7 +18,7 @@ var xyz = []
 
 const pathToUserData = app.getPath('userData')
 let pathToConfig = join(pathToUserData, 'pingConfig.json')
-const emptyConfig = { devices: [], email: { addresses: [], subject: 'Network Issues Have Been Detected' } }
+const emptyConfig = { devices: [], email: { addresses: [], subject: 'Network Issues Have Been Detected', muteCloseWaring: false } }
 
 if (!fs.existsSync(pathToConfig)) {
     fs.writeFileSync(pathToConfig, JSON.stringify(emptyConfig, null, '\t'))
@@ -66,7 +66,8 @@ function createWindow() {
 
     win.on('close', (e) => {
         e.preventDefault();
-        win.webContents.send('showCloseWarning')
+        if (getFile().muteCloseWaring) app.exit()
+        else win.webContents.send('showCloseWarning')
     })
     win.on('ready-to-show', () => {
         console.log("HEREEEE", app.getLoginItemSettings())
@@ -208,10 +209,10 @@ const mainInit = () => {
 
     ipcMain.on('pingOne', (e, theOne) => pingOne(theOne))
 
-    ipcMain.handle('updateSettings', (e, newEmailSettings) => {
+    ipcMain.handle('updateSettings', (e, newSettings) => {
         console.log('Update App Settings')
         let tempFile = getFile()
-        tempFile.email = newEmailSettings
+        tempFile.settings = newSettings
         saveFile(tempFile)
         return makeSettings()
     })
@@ -229,6 +230,15 @@ const mainInit = () => {
         xyz.forEach(host => host.ping())
         return "Pinged All"
     }
+
+    ipcMain.handle('setCloseWindowWarningMute', (e, val) => {
+        let tempFile = getFile()
+        tempFile.muteCloseWarning = val
+        saveFile(tempFile)
+        return val
+    })
+
+    ipcMain.handle('getCloseWindowWarningMute', () => getFile().muteCloseWarning)
 
     ipcMain.handle('exitApp', () => app.exit())
     ipcMain.handle('closeWindow', () => {
