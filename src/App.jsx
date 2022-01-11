@@ -7,7 +7,7 @@ var ReactDOMServer = require('react-dom/server');
 function App() {
 
   useEffect(() => {
-    //window.electron.receive('message', (e, theMessage) => console.log(theMessage))
+    window.electron.receive('message', (theMessage) => console.log(theMessage))
 
     window.electron.ipcRenderer.send('reactIsReady')
 

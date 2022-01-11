@@ -53,7 +53,7 @@ export default function Updates() {
             else if (a === 'update-not-available') console.log("Up to date: v" + b.version)
             else if (a === 'update-available') setDownloadSnack(old => ({ show: true, progress: 0 }))
             else if (a === 'download-progress') {
-                console.log("Downloading", Math.round(b.percent) + "%")
+                console.log("Downloading Update", Math.round(b.percent) + "%")
                 setDownloadSnack(old => ({ ...old, progress: Math.round(b.percent) }))
             }
             else if (a === 'update-downloaded') {

@@ -69,8 +69,9 @@ function createWindow() {
     })
     win.on('ready-to-show', () => {
         console.log("HEREEEE", app.getLoginItemSettings())
+        win.webContents.send('message', app.getLoginItemSettings())
         if (app.getLoginItemSettings().wasOpenedAtLogin) return
-        win.show()
+        else win.show()
     })
 
 
