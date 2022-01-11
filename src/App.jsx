@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { HashRouter } from 'react-router-dom';
 import Top from './components/Top'
 import Email from './Email';
 import Updates from './Updates'
@@ -33,7 +34,9 @@ function App() {
       maxHeight: '100vh',
       overflow: 'hidden'
     }}>
-      <Top />
+      <HashRouter>
+        <Top />
+      </HashRouter>
       <Updates />
     </div>
   );
