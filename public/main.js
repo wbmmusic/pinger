@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
-const { join } = require('path')
+const { join, dirname, resolve, basename } = require('path')
 const url = require('url')
 
 const { v4: uuid } = require('uuid');
@@ -8,6 +8,10 @@ const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const { Pingable } = require('./pingable');
 const { sendEmail } = require('./email');
+
+const appFolder = dirname(process.execPath)
+const updateExe = resolve(appFolder, '..', 'Update.exe')
+const exeName = basename(process.execPath)
 
 require('./email')
 
@@ -69,7 +73,6 @@ function createWindow() {
     })
     win.on('ready-to-show', () => {
         console.log("HEREEEE", app.getLoginItemSettings())
-        win.webContents.send('message', app.getLoginItemSettings())
         if (app.getLoginItemSettings().wasOpenedAtLogin) return
         else win.show()
     })
@@ -240,7 +243,11 @@ const mainInit = () => {
         return app.getLoginItemSettings().executableWillLaunchAtLogin
     })
     ipcMain.handle('enableAutoLaunch', async() => {
-        app.setLoginItemSettings({ openAtLogin: true, args: ["--autoStart"] })
+        app.setLoginItemSettings({
+            openAtLogin: true,
+            path: updateExe,
+            args: [`"${exeName}`]
+        })
         console.log(app.getLoginItemSettings())
         return app.getLoginItemSettings().executableWillLaunchAtLogin
     })
@@ -278,6 +285,7 @@ app.on('ready', () => {
 
         console.log('React Is Ready')
         win.webContents.send('message', 'React Is Ready')
+        win.webContents.send('message', app.getLoginItemSettings())
 
         if (firstReactInit) {
             firstReactInit = false
