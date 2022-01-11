@@ -47,7 +47,6 @@ export default function Updates() {
     );
 
     useEffect(() => {
-        window.electron.ipcRenderer.send('reactIsReady')
         window.electron.receive('updater', (a, b) => {
             if (a === 'checking-for-update') console.log("Checking For Update")
             else if (a === 'update-not-available') console.log("Up to date: v" + b.version)

@@ -8,7 +8,6 @@ const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const { Pingable } = require('./pingable');
 const { sendEmail } = require('./email');
-const { dialog } = require('electron/main');
 
 require('./email')
 
@@ -35,14 +34,15 @@ const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) app.exit()
 
 app.on('second-instance', () => {
-        // Someone tried to run a second instance, we should focus our window.
-        if (win) {
-            win.show()
-            if (win.isMinimized()) win.restore()
-            win.focus()
-        }
-    })
-    //////  END SINGLE INSTANCE ////////
+    // Someone tried to run a second instance, we should focus our window.
+    if (win) {
+        win.show()
+        if (win.isMinimized()) win.restore()
+        win.focus()
+    }
+})
+
+//////  END SINGLE INSTANCE ////////
 
 function createWindow() {
     // Create the browser window.
@@ -70,7 +70,6 @@ function createWindow() {
         else win.webContents.send('showCloseWarning')
     })
     win.on('ready-to-show', () => {
-        console.log("HEREEEE", app.getLoginItemSettings())
         if (process.argv.indexOf('--autoStart') !== -1) return
         else win.show()
     })
@@ -247,18 +246,17 @@ const mainInit = () => {
     })
 
     ipcMain.handle('getAutoLaunchSetting', async() => {
-        console.log("IN DIS BITCH")
-        console.log(app.getLoginItemSettings())
+        //console.log(app.getLoginItemSettings())
         return app.getLoginItemSettings().executableWillLaunchAtLogin
     })
     ipcMain.handle('enableAutoLaunch', async() => {
         app.setLoginItemSettings({ openAtLogin: true, args: ["--autoStart"] })
-        console.log(app.getLoginItemSettings())
+            //console.log(app.getLoginItemSettings())
         return true
     })
     ipcMain.handle('disableAutoLaunch', async() => {
         app.setLoginItemSettings({ openAtLogin: false })
-        console.log(app.getLoginItemSettings())
+            //console.log(app.getLoginItemSettings())
         return false
     })
 
@@ -289,7 +287,6 @@ app.on('ready', () => {
     ipcMain.on('reactIsReady', () => {
 
         console.log('React Is Ready')
-        win.webContents.send('message', 'React Is Ready')
         win.webContents.send('message', process.argv)
 
         if (firstReactInit) {
