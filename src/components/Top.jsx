@@ -14,6 +14,7 @@ export default function Top() {
     const [ogSettings, setogSettings] = useState(null)
     const [newAddress, setNewAddress] = useState('')
     const [autoLaunch, setAutoLaunch] = useState(false)
+    const [closeWindowModal, setCloseWindowModal] = useState({ show: false })
 
     const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal)
     const closeGeneralSettingsModal = () => setGeneralSettingsModal(defaultGeneralSettingsModal)
@@ -37,7 +38,7 @@ export default function Top() {
 
     const emailSettings = () => {
         setGeneralSettingsModal(old => ({ ...old, save: false, show: false, processing: true }))
-        window.electron.ipcRenderer.invoke('getEmailSettings')
+        window.electron.ipcRenderer.invoke('getAppSettings')
             .then(res => {
                 //console.log(res)
                 setGeneralSettingsModal({ show: true, settings: { ...res } })
@@ -58,7 +59,7 @@ export default function Top() {
 
     const updateGeneralSettings = () => {
         //console.log('Handle Update Email Setting', generalSettingsModal.settings)
-        window.electron.ipcRenderer.invoke('updateEmail', generalSettingsModal.settings)
+        window.electron.ipcRenderer.invoke('updateSettings', generalSettingsModal.settings)
             .then(res => closeGeneralSettingsModal())
             .catch(err => console.error(err))
     }
@@ -109,6 +110,8 @@ export default function Top() {
 
     useEffect(() => {
         makeLaunch()
+        window.electron.receive('showCloseWarning', () => setCloseWindowModal({ show: true }))
+        return () => window.electron.removeListener('showCloseWarning')
     }, [])
 
     const makeSettingsModal = () => {
@@ -277,6 +280,52 @@ export default function Top() {
         }
     }
 
+    const closeCloseWindowModal = () => setCloseWindowModal({ show: false })
+
+    const closeWindow = () => {
+        window.electron.ipcRenderer.invoke('closeWindow')
+            .then(res => {
+                console.log(res)
+                closeCloseWindowModal()
+            })
+            .catch(err => console.error(err))
+    }
+
+    const exitApp = () => {
+        window.electron.ipcRenderer.invoke('exitApp')
+            .then(res => console.log(res))
+            .catch(err => console.error(err))
+    }
+
+    const makeCloseWindowModal = () => {
+        if (closeWindowModal.show) {
+            return (
+                <Modal
+                    show={closeWindowModal.show}
+                    onHide={closeCloseWindowModal}
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header>
+                        <Modal.Title>Close Warning</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div>Closing this window does not close Pinger.</div>
+                        <div>To fully close pinger click the "Stop Pinger" button.</div>
+                        <div style={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
+                            <input type="checkbox" />
+                            <div style={{ paddingLeft: '10px' }} >Always run in background and do not show this warning again</div>
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="danger" onClick={exitApp}>Stop Pinger</Button>
+                        <Button variant="success" onClick={closeWindow}>Continue in background</Button>
+                    </Modal.Footer>
+                </Modal>
+            )
+        }
+    }
+
     return (
         <Fragment>
             <div style={{ borderTop: '1px solid lightGrey' }}>
@@ -302,6 +351,7 @@ export default function Top() {
                 <Email />
                 {makeNewDeviceModal()}
                 {makeSettingsModal()}
+                {makeCloseWindowModal()}
             </div>
         </Fragment>
     )

@@ -8,6 +8,7 @@ const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const { Pingable } = require('./pingable');
 const { sendEmail } = require('./email');
+const { dialog } = require('electron/main');
 
 require('./email')
 
@@ -65,17 +66,13 @@ function createWindow() {
 
     win.on('close', (e) => {
         e.preventDefault();
-        win.hide()
+        win.webContents.send('showCloseWarning')
     })
     win.on('ready-to-show', () => {
         console.log("HEREEEE", app.getLoginItemSettings())
         if (process.argv.indexOf('--autoStart') !== -1) return
         else win.show()
     })
-
-
-    // Emitted when the window is closed.
-
 }
 
 const getDevices = () => {
@@ -96,8 +93,8 @@ const getDevices = () => {
 
 const getFile = () => JSON.parse(fs.readFileSync(pathToConfig))
 const saveFile = (fileData) => fs.writeFileSync(pathToConfig, JSON.stringify(fileData, null, '\t'))
-const makeEmail = () => getFile().email
-exports.emailSettings = () => makeEmail()
+const makeSettings = () => getFile().settings
+exports.appSettings = () => makeSettings()
 
 const mainInit = () => {
     const updateDevices = (name) => win.webContents.send('devices', getDevices())
@@ -211,15 +208,15 @@ const mainInit = () => {
 
     ipcMain.on('pingOne', (e, theOne) => pingOne(theOne))
 
-    ipcMain.handle('updateEmail', (e, newEmailSettings) => {
-        console.log('Update Email')
+    ipcMain.handle('updateSettings', (e, newEmailSettings) => {
+        console.log('Update App Settings')
         let tempFile = getFile()
         tempFile.email = newEmailSettings
         saveFile(tempFile)
-        return makeEmail()
+        return makeSettings()
     })
 
-    ipcMain.handle('getEmailSettings', () => makeEmail())
+    ipcMain.handle('getAppSettings', () => makeSettings())
 
     const pingOne = (host) => {
         // Reset the timer
@@ -233,6 +230,12 @@ const mainInit = () => {
         return "Pinged All"
     }
 
+    ipcMain.handle('exitApp', () => app.exit())
+    ipcMain.handle('closeWindow', () => {
+        win.hide()
+        return "closed window"
+    })
+
     ipcMain.handle('getAutoLaunchSetting', async() => {
         console.log("IN DIS BITCH")
         console.log(app.getLoginItemSettings())
@@ -241,16 +244,16 @@ const mainInit = () => {
     ipcMain.handle('enableAutoLaunch', async() => {
         app.setLoginItemSettings({ openAtLogin: true, args: ["--autoStart"] })
         console.log(app.getLoginItemSettings())
-        return app.getLoginItemSettings().executableWillLaunchAtLogin
+        return true
     })
     ipcMain.handle('disableAutoLaunch', async() => {
         app.setLoginItemSettings({ openAtLogin: false })
         console.log(app.getLoginItemSettings())
-        return app.getLoginItemSettings().executableWillLaunchAtLogin
+        return false
     })
 
     makeDevices()
-    makeEmail()
+    makeSettings()
 }
 
 
@@ -262,7 +265,7 @@ app.on('ready', () => {
     const contextMenu = Menu.buildFromTemplate([
         { label: 'Open', click: () => win.show() },
         {
-            label: 'Exit',
+            label: 'Stop Pinger',
             click: () => {
                 tray.destroy()
                 app.exit()

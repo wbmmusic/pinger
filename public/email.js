@@ -35,7 +35,7 @@ exports.getEmailHtml = async(send) => {
 exports.sendEmail = async(send) => {
     console.log("Sending Email")
     return new Promise(async(resolve, reject) => {
-        const eSettings = idx.emailSettings()
+        const eSettings = idx.appSettings()
         console.log(eSettings)
 
         const message = {
