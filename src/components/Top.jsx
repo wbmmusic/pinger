@@ -324,7 +324,7 @@ export default function Top() {
                         <div>To fully close pinger click the "Stop Pinger" button.</div>
                         <div style={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
                             <input checked={muteCloseWin} type="checkbox" onChange={handleCloseWindowWarinigMute} />
-                            <div style={{ paddingLeft: '10px' }} >Always run in background and do not show this warning again</div>
+                            <div style={{ paddingLeft: '10px' }} >Always run in background and hide this warning</div>
                         </div>
                     </Modal.Body>
                     <Modal.Footer>
