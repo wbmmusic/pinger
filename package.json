@@ -34,15 +34,13 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "dev": "nf start",
-        "install": "electron-rebuild",
-        "rebuild": "electron-rebuild -f",
         "package": "electron-builder build -c.extraMetadata.main=build/main.js --publish never",
         "deploy": "electron-builder build -c.extraMetadata.main=build/main.js --publish always",
         "backup": "git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master",
         "upload": "yarn build && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && yarn deploy ",
         "electron": "electron .",
         "try": "yarn build && yarn package ",
-        "refresh": "yarn upgrade --latest && yarn rebuild",
+        "refresh": "yarn upgrade --latest",
         "postinstall": "electron-builder install-app-deps"
     },
     "eslintConfig": {
@@ -65,8 +63,7 @@
     },
     "devDependencies": {
         "electron": "^19.0.10",
-        "electron-builder": "^23.3.3",
-        "electron-rebuild": "^3.2.8"
+        "electron-builder": "^23.3.3"
     },
     "author": "Marece Williams",
     "description": "Enter a description",
