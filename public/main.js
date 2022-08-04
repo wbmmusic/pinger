@@ -50,7 +50,7 @@ function createWindow() {
         width: 900,
         height: 700,
         show: false,
-        webPreferences: { preload: join(__dirname, 'preload.js') },
+        webPreferences: { preload: join(__dirname, 'preload.js'), sandbox: false },
         icon: join(__dirname, '/favicon.ico'),
         autoHideMenuBar: true,
         title: 'Pinger v' + app.getVersion()
