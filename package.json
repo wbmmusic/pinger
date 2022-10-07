@@ -6,27 +6,27 @@
         "@emotion/react": "^11.10.4",
         "@emotion/styled": "^11.10.4",
         "@mui/icons-material": "^5.10.6",
-        "@mui/material": "^5.10.7",
+        "@mui/material": "^5.10.8",
         "@testing-library/jest-dom": "^5.16.5",
         "@testing-library/react": "^13.4.0",
         "@testing-library/user-event": "^14.4.3",
-        "@types/jest": "^29.1.1",
-        "@types/node": "^18.8.0",
+        "@types/jest": "^29.1.2",
+        "@types/node": "^18.8.3",
         "@types/react": "^18.0.21",
         "@types/react-dom": "^18.0.6",
-        "bootstrap": "^5.2.1",
+        "bootstrap": "^5.2.2",
         "date-and-time": "^2.4.1",
-        "electron-updater": "^5.2.1",
+        "electron-updater": "^5.3.0",
         "foreman": "^3.0.1",
         "nodemailer": "^6.8.0",
         "ping": "^0.4.2",
         "react": "^18.2.0",
         "react-bootstrap": "^2.5.0",
         "react-dom": "^18.2.0",
-        "react-router-dom": "^6.4.1",
+        "react-router-dom": "^6.4.2",
         "react-scripts": "5.0.1",
         "uuid": "^9.0.0",
-        "web-vitals": "^3.0.2"
+        "web-vitals": "^3.0.3"
     },
     "scripts": {
         "start": "react-scripts start",
@@ -62,8 +62,8 @@
         ]
     },
     "devDependencies": {
-        "electron": "^21.0.1",
-        "electron-builder": "^23.3.3"
+        "electron": "^21.1.0",
+        "electron-builder": "^23.6.0"
     },
     "author": "Marece Williams",
     "description": "Enter a description",
