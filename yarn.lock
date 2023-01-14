@@ -4162,10 +4162,10 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-date-and-time@^2.4.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-2.4.1.tgz#e028851fcaf01e2626934742cf625e75d9bc2258"
-  integrity sha512-fG+ClATev+wHryqxOoGcTTegr5RhYE+tz/XHUkTQ/zvpWqQ90oOxjOhuMQ02bw87Oy9N3qBENCHHHSKdWJjgTg==
+date-and-time@^2.4.2:
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-2.4.2.tgz#3a0382d33e57714c7949301d14bc1a454b8f3807"
+  integrity sha512-h+GwuCLcrDblUt2pXdVuKJJenwNMNtEw1H/eWqBdrkOziTTPzgAkzyCLXZ+QXgtOEheO59cZa8DcObYwE6NLDA==
 
 debug@2.6.9, debug@^2.6.0, debug@^2.6.8, debug@^2.6.9:
   version "2.6.9"
@@ -4574,10 +4574,10 @@ electron-updater@^5.3.0:
     semver "^7.3.5"
     typed-emitter "^2.1.0"
 
-electron@^22.0.1:
-  version "22.0.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-22.0.1.tgz#32a8533848e41f07e53f6feb0656207da57d8707"
-  integrity sha512-05X/UmQOtUYwFmytY4/rc+4Iz+LYzHhftRZDkx1GQzyX/BxopStddG8LMcx3SESNk25F2J93oHv1Lzs6QWeCjA==
+electron@^22.0.2:
+  version "22.0.2"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-22.0.2.tgz#256c3f7749bcab5d68dc0ba4ae86c1b60852f0b3"
+  integrity sha512-NdJlA2+FMgDJBhQFKMPyWJY8ng/tWpFlrRsW2JkZgSzYPXOnIu9muO3b83YHGoDn+GTyS8ghPsgcAwPMXtxirA==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^16.11.26"
