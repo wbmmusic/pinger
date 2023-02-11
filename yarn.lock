@@ -2434,10 +2434,10 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/react@^18.0.27":
-  version "18.0.27"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.0.27.tgz#d9425abe187a00f8a5ec182b010d4fd9da703b71"
-  integrity sha512-3vtRKHgVxu3Jp9t718R9BuzoD4NcQ8YJ5XRzsSKxNDiDonD2MXIT1TmSkenxuCycZJoQT5d2vE8LwWJxBC1gmA==
+"@types/react@^18.0.28":
+  version "18.0.28"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.0.28.tgz#accaeb8b86f4908057ad629a26635fe641480065"
+  integrity sha512-RD0ivG1kEztNBdoAK7lekI9M+azSnitIn85h4iOiaLjaTrMjzslhaqCGaI4IyCJ1RljWiLCEu4jyrLLgqxBTew==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -8480,10 +8480,10 @@ react-app-polyfill@^3.0.0:
     regenerator-runtime "^0.13.9"
     whatwg-fetch "^3.6.2"
 
-react-bootstrap@^2.7.0:
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-2.7.0.tgz#4a8f0311bccac477dc925366763c536f46e4393b"
-  integrity sha512-Jcrn6aUuRVBeSB6dzKODKZU1TONOdhAxu0IDm4Sv74SJUm98dMdhSotF2SNvFEADANoR+stV+7TK6SNX1wWu5w==
+react-bootstrap@^2.7.1:
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-2.7.1.tgz#ecb245b06fd404700436e9a2ef9a998767225bf0"
+  integrity sha512-x+wjk5ZkLR2Bw74iDx/YR0LLheyV72eehjnJPfs6RvkWQfJGVV89dceh1dhJloeazHZwiLWA4LHHwHNGONkUHw==
   dependencies:
     "@babel/runtime" "^7.17.2"
     "@restart/hooks" "^0.4.6"
