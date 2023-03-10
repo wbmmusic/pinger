@@ -29,7 +29,7 @@ let win
 let tray = null
 
 exports.win = win
-    ////////  SINGLE INSTANCE //////////
+////////  SINGLE INSTANCE //////////
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) app.exit()
 
@@ -46,6 +46,7 @@ app.on('second-instance', () => {
 
 function createWindow() {
     // Create the browser window.
+
     win = new BrowserWindow({
         width: 900,
         height: 700,
@@ -145,7 +146,7 @@ const mainInit = () => {
                         console.log("NO MATCH")
                         xyz[existingIDX][key] = host[key]
                         changed = true
-                    } else("MATCH")
+                    } else ("MATCH")
                 })
 
                 if (changed) xyz[existingIDX].ping()
@@ -245,18 +246,18 @@ const mainInit = () => {
         return "closed window"
     })
 
-    ipcMain.handle('getAutoLaunchSetting', async() => {
+    ipcMain.handle('getAutoLaunchSetting', async () => {
         //console.log(app.getLoginItemSettings())
         return app.getLoginItemSettings().executableWillLaunchAtLogin
     })
-    ipcMain.handle('enableAutoLaunch', async() => {
+    ipcMain.handle('enableAutoLaunch', async () => {
         app.setLoginItemSettings({ openAtLogin: true, args: ["--autoStart"] })
-            //console.log(app.getLoginItemSettings())
+        //console.log(app.getLoginItemSettings())
         return true
     })
-    ipcMain.handle('disableAutoLaunch', async() => {
+    ipcMain.handle('disableAutoLaunch', async () => {
         app.setLoginItemSettings({ openAtLogin: false })
-            //console.log(app.getLoginItemSettings())
+        //console.log(app.getLoginItemSettings())
         return false
     })
 
@@ -309,7 +310,7 @@ app.on('ready', () => {
 
 
             // Send Email Test
-            setTimeout(async() => {
+            setTimeout(async () => {
                 //console.log(await sendEmail(() => win.webContents.send('makeEmailBody')))
             }, 1000);
 
