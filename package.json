@@ -12,7 +12,7 @@
         "@testing-library/user-event": "^14.4.3",
         "@types/jest": "^29.5.0",
         "@types/node": "^18.15.11",
-        "@types/react": "^18.0.34",
+        "@types/react": "^18.0.35",
         "@types/react-dom": "^18.0.11",
         "bootstrap": "^5.2.3",
         "date-and-time": "^2.4.3",
@@ -21,7 +21,7 @@
         "nodemailer": "^6.9.1",
         "ping": "^0.4.4",
         "react": "^18.2.0",
-        "react-bootstrap": "^2.7.2",
+        "react-bootstrap": "^2.7.3",
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.10.0",
         "react-scripts": "5.0.1",
@@ -62,7 +62,7 @@
         ]
     },
     "devDependencies": {
-        "electron": "^24.0.0",
+        "electron": "^24.1.1",
         "electron-builder": "^23.6.0"
     },
     "author": "Marece Williams",
