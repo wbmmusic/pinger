@@ -2400,10 +2400,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.11.tgz#b3b790f09cb1696cffcec605de025b088fa4225f"
   integrity sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==
 
-"@types/node@^18.15.13":
-  version "18.15.13"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.13.tgz#f64277c341150c979e42b00e4ac289290c9df469"
-  integrity sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==
+"@types/node@^18.16.0":
+  version "18.16.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.16.0.tgz#4668bc392bb6938637b47e98b1f2ed5426f33316"
+  integrity sha512-BsAaKhB+7X+H4GnSjGhJG9Qi8Tw+inU9nJDwmD5CgOmBLEI6ArdhikpLX7DjbjDRDTbqZzU2LSQNZg8WGPiSZQ==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -4207,10 +4207,10 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-date-and-time@^2.4.3:
-  version "2.4.3"
-  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-2.4.3.tgz#116963998a8cecd478955ae053f31a6747a988df"
-  integrity sha512-xkS/imTmsyEdpp9ie5oV5UWolg3XkYWNySbT2W4ESWr6v4V8YrsHbhpk9fIeQcr0NFTnYbQJLXlgU1zrLItysA==
+date-and-time@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-3.0.0.tgz#c4655424060cdb9494990a6d14a44d90be53b57d"
+  integrity sha512-uuzXp/mvv6jEMLiP5QzERSQPzHqYnv9i8NZ8BS5kYeB2sakv74EewQiCS4Ahxwq3In+9fYZhGztuDHRVzIOkFQ==
 
 debug@2.6.9, debug@^2.6.0, debug@^2.6.8:
   version "2.6.9"
