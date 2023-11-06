@@ -12,7 +12,7 @@
         "@testing-library/user-event": "^14.5.1",
         "@types/jest": "^29.5.7",
         "@types/node": "^20.8.10",
-        "@types/react": "^18.2.33",
+        "@types/react": "^18.2.36",
         "@types/react-dom": "^18.2.14",
         "bootstrap": "^5.3.2",
         "date-and-time": "^3.0.3",
@@ -62,7 +62,7 @@
         ]
     },
     "devDependencies": {
-        "electron": "^27.0.2",
+        "electron": "^27.0.3",
         "electron-builder": "^24.6.4"
     },
     "author": "Marece Williams",
