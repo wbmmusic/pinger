@@ -23,7 +23,7 @@
         "react": "^18.2.0",
         "react-bootstrap": "^2.9.1",
         "react-dom": "^18.2.0",
-        "react-router-dom": "^6.21.0",
+        "react-router-dom": "^6.21.1",
         "react-scripts": "5.0.1",
         "uuid": "^9.0.1",
         "web-vitals": "^3.5.0"
@@ -62,7 +62,7 @@
         ]
     },
     "devDependencies": {
-        "electron": "^28.0.0",
+        "electron": "^28.1.0",
         "electron-builder": "^24.9.1"
     },
     "author": "Marece Williams",
