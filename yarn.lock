@@ -2535,10 +2535,10 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/react@^18.2.46":
-  version "18.2.46"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.2.46.tgz#f04d6c528f8f136ea66333bc66abcae46e2680df"
-  integrity sha512-nNCvVBcZlvX4NU1nRRNV/mFl1nNRuTuslAJglQsq+8ldXe5Xv0Wd2f7WTE3jOxhLH2BFfiZGC6GCp+kHQbgG+w==
+"@types/react@^18.2.47":
+  version "18.2.47"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.2.47.tgz#85074b27ab563df01fbc3f68dc64bf7050b0af40"
+  integrity sha512-xquNkkOirwyCgoClNk85BjP+aqnIS+ckAJ8i37gAbDs14jfW/J23f2GItAf33oiUPQnqNMALiFeoM9Y5mbjpVQ==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -4229,10 +4229,10 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-date-and-time@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-3.0.3.tgz#a571a2ca7a47ce08bfe3403d1507530bc432ba02"
-  integrity sha512-CmHCeTixc3KA5pcLTVs9JCFhmJMFTBsmSsgHnNed4YDNw9yUOrjjRn3zALy8eMgqmTO+4U8k5jl1peC7IoezfA==
+date-and-time@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-3.1.0.tgz#ae7500976d553907bd8b7a31f0eca00f8c289abc"
+  integrity sha512-tWIpW3LK8tyLofyuMYxfOUchstWcyXjM+4rzIzve/VtBLzvS6q1oOxkcwhQ710nhU3M04jpfveDQ18IIw8lm2A==
 
 debug@2.6.9, debug@^2.6.0:
   version "2.6.9"
