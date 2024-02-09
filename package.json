@@ -5,15 +5,15 @@
     "dependencies": {
         "@emotion/react": "^11.11.3",
         "@emotion/styled": "^11.11.0",
-        "@mui/icons-material": "^5.15.8",
-        "@mui/material": "^5.15.7",
+        "@mui/icons-material": "^5.15.9",
+        "@mui/material": "^5.15.9",
         "@testing-library/jest-dom": "^6.4.2",
         "@testing-library/react": "^14.2.1",
         "@testing-library/user-event": "^14.5.2",
         "@types/jest": "^29.5.12",
-        "@types/node": "^20.11.16",
+        "@types/node": "^20.11.17",
         "@types/react": "^18.2.55",
-        "@types/react-dom": "^18.2.18",
+        "@types/react-dom": "^18.2.19",
         "bootstrap": "^5.3.2",
         "date-and-time": "^3.1.1",
         "electron-updater": "^6.1.7",
@@ -62,7 +62,7 @@
         ]
     },
     "devDependencies": {
-        "electron": "^28.2.1",
+        "electron": "^28.2.2",
         "electron-builder": "^24.9.1"
     },
     "author": "Marece Williams",
