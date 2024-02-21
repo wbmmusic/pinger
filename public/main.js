@@ -146,7 +146,7 @@ const mainInit = () => {
                         console.log("NO MATCH")
                         xyz[existingIDX][key] = host[key]
                         changed = true
-                    } else ("MATCH")
+                    } else console.log("MATCH")
                 })
 
                 if (changed) xyz[existingIDX].ping()

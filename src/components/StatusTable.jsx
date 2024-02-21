@@ -14,7 +14,7 @@ export default function StatusTable() {
   );
 
   useEffect(() => {
-    window.electron.ipcRenderer
+    window.electron
       .invoke("getDevices")
       .then(res => setDevices(res))
       .catch(err => console.log(err));
@@ -30,7 +30,7 @@ export default function StatusTable() {
 
   const executeDeleteDevice = () => {
     console.log(deleteDeviceModal.id);
-    window.electron.ipcRenderer
+    window.electron
       .invoke("deleteDevice", deleteDeviceModal.id)
       .then(res => {
         console.log(res);
@@ -47,7 +47,7 @@ export default function StatusTable() {
   };
 
   const updateDevice = () => {
-    window.electron.ipcRenderer.send("updateDevice", editDeviceModal.device);
+    window.electron.send("updateDevice", editDeviceModal.device);
     setDeleteDeviceModal(false);
     handleClose();
   };
@@ -109,9 +109,7 @@ export default function StatusTable() {
           <td style={styles}>{sortedDevices[i].lastGood}</td>
           <td style={styles}>
             <Button
-              onClick={() =>
-                window.electron.ipcRenderer.send("pingOne", sortedDevices[i])
-              }
+              onClick={() => window.electron.send("pingOne", sortedDevices[i])}
               size="sm"
             >
               Ping
