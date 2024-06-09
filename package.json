@@ -37,10 +37,10 @@
         "package": "electron-builder build -c.extraMetadata.main=build/main.js --publish never",
         "deploy": "electron-builder build -c.extraMetadata.main=build/main.js --publish always",
         "backup": "git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master",
-        "upload": "yarn build && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && yarn deploy ",
+        "upload": "pnpm build && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm deploy ",
         "electron": "electron .",
-        "try": "yarn build && yarn package ",
-        "refresh": "yarn upgrade --latest",
+        "try": "pnpm build && pnpm package ",
+        "refresh": "pnpm upgrade --latest",
         "postinstall": "electron-builder install-app-deps"
     },
     "eslintConfig": {
@@ -62,7 +62,7 @@
         ]
     },
     "devDependencies": {
-        "electron": "^30.0.9",
+        "electron": "^30.1.0",
         "electron-builder": "^24.13.3"
     },
     "author": "Marece Williams",
@@ -85,5 +85,6 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/wbmmusic/pinger.git"
-    }
+    },
+    "packageManager": "pnpm@9.2.0+sha512.98a80fd11c2e7096747762304106432b3ddc67dcf54b5a8c01c93f68a2cd5e05e6821849522a06fb76284d41a2660d5e334f2ee3bbf29183bf2e739b1dafa771"
 }
