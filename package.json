@@ -18,7 +18,7 @@
         "date-and-time": "^3.6.0",
         "electron-updater": "^6.6.2",
         "foreman": "^3.0.1",
-        "nodemailer": "^7.0.4",
+        "nodemailer": "^7.0.5",
         "ping": "^0.4.4",
         "react": "^19.1.0",
         "react-bootstrap": "^2.10.10",
