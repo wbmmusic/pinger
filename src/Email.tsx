@@ -1,9 +1,4 @@
-import React from 'react'
-
 export default function Email() {
-
-
-
     return (
         <div style={{ backgroundColor: 'lightGrey' }}>
             <div style={{ padding: '10px', display: 'inline-block' }}>
@@ -41,5 +36,5 @@ export default function Email() {
                 Some other information can go here
             </div>
         </div>
-    )
+    );
 }

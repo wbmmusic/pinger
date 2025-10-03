@@ -3,11 +3,11 @@ import { HashRouter } from "react-router-dom";
 import Top from "./components/Top";
 import Email from "./Email";
 import Updates from "./Updates";
-var ReactDOMServer = require("react-dom/server");
+import * as ReactDOMServer from "react-dom/server";
 
 function App() {
   useEffect(() => {
-    window.electron.receive("message", theMessage => console.log(theMessage));
+    window.electron.receive("message", (theMessage: any) => console.log(theMessage));
 
     window.electron.send("reactIsReady");
 

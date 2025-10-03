@@ -16,10 +16,29 @@ import PersonAddAlt1TwoToneIcon from "@mui/icons-material/PersonAddAlt1TwoTone";
 import PersonOffTwoToneIcon from "@mui/icons-material/PersonOffTwoTone";
 import CheckTwoToneIcon from "@mui/icons-material/CheckTwoTone";
 import { Route, Routes, useNavigate } from "react-router-dom";
+import { EmailSettings } from "../types/electron";
+
+interface NewDeviceModal {
+  show: boolean;
+  name: string;
+  address: string;
+  notes: string;
+  frequency: number;
+  trys: number;
+}
+
+interface GeneralSettingsModal {
+  show: boolean;
+  settings: EmailSettings;
+}
+
+interface CloseWindowModal {
+  show: boolean;
+}
 
 export default function Top() {
   const navigate = useNavigate();
-  const defaultNewDeviceModal = {
+  const defaultNewDeviceModal: NewDeviceModal = {
     show: false,
     name: "",
     address: "",
@@ -27,19 +46,19 @@ export default function Top() {
     frequency: 10,
     trys: 3,
   };
-  const defaultGeneralSettingsModal = {
+  const defaultGeneralSettingsModal: GeneralSettingsModal = {
     show: false,
     settings: { addresses: [], subject: "", location: "" },
   };
-  const [newDeviceModal, setNewDeviceModal] = useState(defaultNewDeviceModal);
-  const [generalSettingsModal, setGeneralSettingsModal] = useState(
+  const [newDeviceModal, setNewDeviceModal] = useState<NewDeviceModal>(defaultNewDeviceModal);
+  const [generalSettingsModal, setGeneralSettingsModal] = useState<GeneralSettingsModal>(
     defaultGeneralSettingsModal
   );
-  const [ogSettings, setogSettings] = useState(null);
-  const [newAddress, setNewAddress] = useState("");
-  const [autoLaunch, setAutoLaunch] = useState(false);
-  const [closeWindowModal, setCloseWindowModal] = useState({ show: false });
-  const [muteCloseWin, setMuteCloseWin] = useState(false);
+  const [ogSettings, setogSettings] = useState<EmailSettings | null>(null);
+  const [newAddress, setNewAddress] = useState<string>("");
+  const [autoLaunch, setAutoLaunch] = useState<boolean>(false);
+  const [closeWindowModal, setCloseWindowModal] = useState<CloseWindowModal>({ show: false });
+  const [muteCloseWin, setMuteCloseWin] = useState<boolean>(false);
 
   const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal);
   const closeGeneralSettingsModal = () =>
@@ -54,11 +73,11 @@ export default function Top() {
   const pingAll = () => {
     window.electron
       .invoke("pingAll")
-      .then(res => console.log(res))
-      .catch(err => console.error(err));
+      .then((res: string) => console.log(res))
+      .catch((err: any) => console.error(err));
   };
 
-  const isSavable = () => {
+  const isSavable = (): boolean => {
     if (
       JSON.stringify(ogSettings) !==
       JSON.stringify(generalSettingsModal.settings)
@@ -76,15 +95,14 @@ export default function Top() {
     }));
     window.electron
       .invoke("getAppSettings")
-      .then(res => {
-        //console.log(res)
+      .then((res: EmailSettings) => {
         setGeneralSettingsModal({ show: true, settings: { ...res } });
         setogSettings(JSON.parse(JSON.stringify(res)));
       })
-      .catch(err => console.error(err));
+      .catch((err: any) => console.error(err));
   };
 
-  const deleteEmail = addy => {
+  const deleteEmail = (addy: string) => {
     setGeneralSettingsModal(old => ({
       ...old,
       settings: {
@@ -95,33 +113,32 @@ export default function Top() {
   };
 
   const updateGeneralSettings = () => {
-    //console.log('Handle Update Email Setting', generalSettingsModal.settings)
     window.electron
       .invoke("updateSettings", generalSettingsModal.settings)
-      .then(res => closeGeneralSettingsModal())
-      .catch(err => console.error(err));
+      .then((_res: EmailSettings) => closeGeneralSettingsModal())
+      .catch((err: any) => console.error(err));
   };
 
   const makeLaunch = () => {
     window.electron
       .invoke("getAutoLaunchSetting")
-      .then(res => setAutoLaunch(res))
-      .catch(err => console.error(err));
+      .then((res: boolean) => setAutoLaunch(res))
+      .catch((err: any) => console.error(err));
   };
 
   useEffect(() => {
     makeLaunch();
     window.electron
       .invoke("getCloseWindowWarningMute")
-      .then(res => setMuteCloseWin(res))
-      .catch(err => console.error(err));
+      .then((res: boolean) => setMuteCloseWin(res))
+      .catch((err: any) => console.error(err));
     window.electron.receive("showCloseWarning", () =>
       setCloseWindowModal({ show: true })
     );
     return () => window.electron.removeListener("showCloseWarning");
   }, []);
 
-  const makeSettingsModal = () => {
+  const makeSettingsModal = (): React.ReactElement | null => {
     if (generalSettingsModal.show) {
       return (
         <Modal
@@ -262,9 +279,10 @@ export default function Top() {
         </Modal>
       );
     }
+    return null;
   };
 
-  const makeNewDeviceModal = () => {
+  const makeNewDeviceModal = (): React.ReactElement | null => {
     if (newDeviceModal.show) {
       return (
         <Modal
@@ -379,6 +397,7 @@ export default function Top() {
         </Modal>
       );
     }
+    return null;
   };
 
   const closeCloseWindowModal = () => setCloseWindowModal({ show: false });
@@ -386,28 +405,28 @@ export default function Top() {
   const closeWindow = () => {
     window.electron
       .invoke("closeWindow")
-      .then(res => {
+      .then((res: string) => {
         console.log(res);
         closeCloseWindowModal();
       })
-      .catch(err => console.error(err));
+      .catch((err: any) => console.error(err));
   };
 
   const exitApp = () => {
     window.electron
       .invoke("exitApp")
-      .then(res => console.log(res))
-      .catch(err => console.error(err));
+      .then((res: void) => console.log(res))
+      .catch((err: any) => console.error(err));
   };
 
-  const handleCloseWindowWarinigMute = e => {
+  const handleCloseWindowWarinigMute = (e: React.ChangeEvent<HTMLInputElement>) => {
     window.electron
       .invoke("setCloseWindowWarningMute", e.target.checked)
-      .then(res => setMuteCloseWin(res))
-      .catch(err => console.error(err));
+      .then((res: boolean) => setMuteCloseWin(res))
+      .catch((err: any) => console.error(err));
   };
 
-  const makeCloseWindowModal = () => {
+  const makeCloseWindowModal = (): React.ReactElement | null => {
     if (closeWindowModal.show) {
       return (
         <Modal
@@ -446,6 +465,7 @@ export default function Top() {
         </Modal>
       );
     }
+    return null;
   };
 
   const makeAutoRunMenu = () => {
@@ -455,8 +475,8 @@ export default function Top() {
           onClick={() => {
             window.electron
               .invoke("disableAutoLaunch")
-              .then(res => setAutoLaunch(res))
-              .catch(err => console.error(err));
+              .then((res: boolean) => setAutoLaunch(res))
+              .catch((err: any) => console.error(err));
           }}
         >
           Autostart <CheckTwoToneIcon />
@@ -467,8 +487,8 @@ export default function Top() {
         onClick={() => {
           window.electron
             .invoke("enableAutoLaunch")
-            .then(res => setAutoLaunch(res))
-            .catch(err => console.error(err));
+            .then((res: boolean) => setAutoLaunch(res))
+            .catch((err: any) => console.error(err));
         }}
       >
         Autostart
@@ -534,8 +554,3 @@ export default function Top() {
     </Fragment>
   );
 }
-
-const labelStyle = {
-  textAlign: "right",
-  width: "1px",
-};

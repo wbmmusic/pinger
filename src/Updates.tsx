@@ -3,16 +3,27 @@ import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import CloseIcon from "@mui/icons-material/Close";
 import Button from "@mui/material/Button";
+import { UpdaterInfo } from "./types/electron";
+
+interface DownloadSnack {
+  show: boolean;
+  progress: number;
+}
+
+interface InstallSnack {
+  show: boolean;
+  version: string;
+}
 
 export default function Updates() {
-  const defaultDownloadSnack = { show: false, progress: 0 };
-  const defaultInstallSnack = { show: false, version: "x.x.x" };
-  const [downloadSnack, setDownloadSnack] = useState(defaultDownloadSnack);
-  const [installSnack, setInstallSnack] = useState(defaultInstallSnack);
+  const defaultDownloadSnack: DownloadSnack = { show: false, progress: 0 };
+  const defaultInstallSnack: InstallSnack = { show: false, version: "x.x.x" };
+  const [downloadSnack, setDownloadSnack] = useState<DownloadSnack>(defaultDownloadSnack);
+  const [installSnack, setInstallSnack] = useState<InstallSnack>(defaultInstallSnack);
 
-  const handleClose = (event, reason) => {
+  const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === "clickaway") return;
-    setDownloadSnack({ show: false });
+    setDownloadSnack({ show: false, progress: 0 });
   };
 
   const install = () => window.electron.send("installUpdate");
@@ -50,19 +61,19 @@ export default function Updates() {
   );
 
   useEffect(() => {
-    window.electron.receive("updater", (a, b) => {
+    window.electron.receive("updater", (a: string, b?: UpdaterInfo) => {
       if (a === "checking-for-update") console.log("Checking For Update");
-      else if (a === "update-not-available")
+      else if (a === "update-not-available" && b)
         console.log("Up to date: v" + b.version);
       else if (a === "update-available")
-        setDownloadSnack(old => ({ show: true, progress: 0 }));
-      else if (a === "download-progress") {
-        console.log("Downloading Update", Math.round(b.percent) + "%");
-        setDownloadSnack(old => ({ ...old, progress: Math.round(b.percent) }));
-      } else if (a === "update-downloaded") {
+        setDownloadSnack(() => ({ show: true, progress: 0 }));
+      else if (a === "download-progress" && b) {
+        console.log("Downloading Update", Math.round(b.percent || 0) + "%");
+        setDownloadSnack(old => ({ ...old, progress: Math.round(b.percent || 0) }));
+      } else if (a === "update-downloaded" && b) {
         console.log("Downloaded", b);
         setDownloadSnack(defaultDownloadSnack);
-        setInstallSnack({ show: true, version: b.tag });
+        setInstallSnack({ show: true, version: b.tag || "unknown" });
       } else if (a === "error") console.log("Update Error", b);
       else console.log(a, b);
     });

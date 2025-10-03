@@ -1,25 +1,46 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Button, Modal, Table } from "react-bootstrap";
 import SettingsTwoToneIcon from "@mui/icons-material/SettingsTwoTone";
+import { Device } from "../types/electron";
+
+interface EditDeviceModal {
+  show: boolean;
+  device: Device;
+}
+
+interface DeleteDeviceModal {
+  show: boolean;
+  id: string;
+}
 
 export default function StatusTable() {
-  const defaultEditDeviceModal = { show: false, device: { name: "" } };
-  const defaultDeleteDeviceModal = { show: false, id: "" };
-  const [devices, setDevices] = useState([]);
-  const [editDeviceModal, setEditDeviceModal] = useState(
+  const defaultEditDeviceModal: EditDeviceModal = { 
+    show: false, 
+    device: { 
+      id: "", 
+      name: "", 
+      address: "", 
+      notes: "", 
+      frequency: 10, 
+      trys: 3 
+    } 
+  };
+  const defaultDeleteDeviceModal: DeleteDeviceModal = { show: false, id: "" };
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [editDeviceModal, setEditDeviceModal] = useState<EditDeviceModal>(
     defaultEditDeviceModal
   );
-  const [deleteDeviceModal, setDeleteDeviceModal] = useState(
+  const [deleteDeviceModal, setDeleteDeviceModal] = useState<DeleteDeviceModal>(
     defaultDeleteDeviceModal
   );
 
   useEffect(() => {
     window.electron
       .invoke("getDevices")
-      .then(res => setDevices(res))
-      .catch(err => console.log(err));
+      .then((res: Device[]) => setDevices(res))
+      .catch((err: any) => console.log(err));
 
-    window.electron.receive("devices", devs => setDevices(devs));
+    window.electron.receive("devices", (devs: Device[]) => setDevices(devs));
 
     return () => {
       window.electron.removeListener("devices");
@@ -32,12 +53,12 @@ export default function StatusTable() {
     console.log(deleteDeviceModal.id);
     window.electron
       .invoke("deleteDevice", deleteDeviceModal.id)
-      .then(res => {
+      .then((res: string) => {
         console.log(res);
         setDeleteDeviceModal(defaultDeleteDeviceModal);
         handleClose();
       })
-      .catch(err => console.log(err));
+      .catch((err: any) => console.log(err));
   };
 
   const deleteDevice = () => {
@@ -48,51 +69,55 @@ export default function StatusTable() {
 
   const updateDevice = () => {
     window.electron.send("updateDevice", editDeviceModal.device);
-    setDeleteDeviceModal(false);
+    setDeleteDeviceModal(defaultDeleteDeviceModal);
     handleClose();
   };
 
   const cancelDelete = () => {
-    setDeleteDeviceModal(false);
+    setDeleteDeviceModal(defaultDeleteDeviceModal);
     setEditDeviceModal(old => ({ ...old, show: true }));
   };
 
-  const changeTrys = value =>
+  const changeTrys = (value: string) =>
     setEditDeviceModal(old => ({
       ...old,
       device: { ...old.device, trys: parseInt(value) },
     }));
-  const changeFrequency = value =>
+
+  const changeFrequency = (value: string) =>
     setEditDeviceModal(old => ({
       ...old,
       device: { ...old.device, frequency: parseFloat(value) },
     }));
-  const changeAddress = theAddress =>
+
+  const changeAddress = (theAddress: string) =>
     setEditDeviceModal(old => ({
       ...old,
       device: { ...old.device, address: theAddress },
     }));
-  const changeName = theName =>
+
+  const changeName = (theName: string) =>
     setEditDeviceModal(old => ({
       ...old,
       device: { ...old.device, name: theName },
     }));
-  const changeNotes = theNotes =>
+
+  const changeNotes = (theNotes: string) =>
     setEditDeviceModal(old => ({
       ...old,
       device: { ...old.device, notes: theNotes },
     }));
 
   const makeRows = () => {
-    let rows = [];
+    const rows: React.ReactElement[] = [];
 
-    let sortedDevices = devices.sort((a, b) => {
+    const sortedDevices = devices.sort((a) => {
       if (a.status === "DEAD") return -1;
       else return 0;
     });
 
     for (let i = 0; i < sortedDevices.length; i++) {
-      let styles = { verticalAlign: "middle" };
+      let styles: React.CSSProperties = { verticalAlign: "middle" };
 
       if (sortedDevices[i].status === "DEAD") {
         styles = { ...styles, backgroundColor: "#FFA0A0" };
@@ -131,7 +156,7 @@ export default function StatusTable() {
     return rows;
   };
 
-  const makeDeleteDeviceModal = () => {
+  const makeDeleteDeviceModal = (): React.ReactElement | null => {
     if (deleteDeviceModal.show) {
       return (
         <Modal show={deleteDeviceModal.show} onHide={cancelDelete}>
@@ -150,9 +175,10 @@ export default function StatusTable() {
         </Modal>
       );
     }
+    return null;
   };
 
-  const makeEditDeviceModal = () => {
+  const makeEditDeviceModal = (): React.ReactElement | null => {
     if (editDeviceModal.show) {
       return (
         <Modal show={editDeviceModal.show} onHide={handleClose}>
@@ -236,6 +262,7 @@ export default function StatusTable() {
         </Modal>
       );
     }
+    return null;
   };
 
   return (
