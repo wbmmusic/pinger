@@ -1,10 +1,16 @@
 import { app, BrowserWindow, ipcMain, Tray, Menu, BrowserWindowConstructorOptions } from 'electron';
 import { join } from 'path';
-import * as url from 'url';
 import { v4 as uuid } from 'uuid';
 import * as fs from 'fs';
 import { autoUpdater } from 'electron-updater';
 import { Pingable, DeviceData } from './pingable';
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require('electron-squirrel-startup')) app.quit();
+
+// Vite defines these constants for Electron Forge
+declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
+declare const MAIN_WINDOW_VITE_NAME: string;
 
 let firstReactInit = true;
 let xyz: Pingable[] = [];
@@ -72,21 +78,23 @@ function createWindow(): void {
         show: false,
         webPreferences: {
             preload: join(__dirname, 'preload.js'),
-            sandbox: false
+            sandbox: false,
+            nodeIntegration: false,
+            contextIsolation: true,
+            webSecurity: true
         },
-        icon: join(__dirname, '/favicon.ico'),
         autoHideMenuBar: true,
         title: 'Pinger v' + app.getVersion()
     };
 
     win = new BrowserWindow(windowOptions);
 
-    const startUrl = process.env.ELECTRON_START_URL || url.format({
-        pathname: join(__dirname, '/../build/index.html'),
-        protocol: 'file:',
-        slashes: true
-    });
-    win.loadURL(startUrl);
+    // Load the app using Vite dev server or built files
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+        win.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    } else {
+        win.loadFile(join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    }
 
     win.on('close', (e) => {
         e.preventDefault();
@@ -312,7 +320,12 @@ const mainInit = (): void => {
 app.on('ready', () => {
     console.log("APP IS READY");
 
-    tray = new Tray(join(__dirname, 'favicon.ico'));
+    // In development, Vite serves from public folder. In production, assets are in the app resources.
+    const iconPath = MAIN_WINDOW_VITE_DEV_SERVER_URL 
+        ? join(__dirname, '..', '..', 'public', 'favicon.ico')
+        : join(process.resourcesPath, 'public', 'favicon.ico');
+    
+    tray = new Tray(iconPath);
     const contextMenu = Menu.buildFromTemplate([
         { label: 'Open', click: () => win.show() },
         {

@@ -7,42 +7,32 @@
         "@emotion/styled": "^11.14.1",
         "@mui/icons-material": "^7.3.2",
         "@mui/material": "^7.3.2",
-        "@testing-library/jest-dom": "^6.9.0",
-        "@testing-library/react": "^16.3.0",
-        "@testing-library/user-event": "^14.6.1",
-        "@types/jest": "^30.0.0",
-        "@types/node": "^24.6.1",
-        "@types/react": "^19.1.16",
-        "@types/react-dom": "^19.1.9",
         "bootstrap": "^5.3.8",
         "date-and-time": "^4.0.5",
+        "electron-squirrel-startup": "^1.0.1",
         "electron-updater": "^6.6.2",
-        "foreman": "^3.0.1",
         "nodemailer": "^7.0.6",
         "ping": "^0.4.4",
         "react": "^19.1.1",
         "react-bootstrap": "^2.10.10",
         "react-dom": "^19.1.1",
         "react-router-dom": "^7.9.3",
-        "react-scripts": "5.0.1",
-        "uuid": "^13.0.0",
-        "web-vitals": "^5.1.0"
+        "uuid": "^13.0.0"
     },
     "scripts": {
-        "start": "react-scripts start",
-        "build": "react-scripts build && pnpm build:electron",
-        "build:electron": "tsc -p tsconfig.electron.json",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject",
-        "dev": "nf start",
-        "package": "electron-builder build -c.extraMetadata.main=build/main.js --publish never",
-        "deploy": "electron-builder build -c.extraMetadata.main=build/main.js --publish always",
-        "backup": "git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master",
-        "upload": "pnpm build && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm deploy ",
-        "electron": "electron .",
-        "try": "pnpm build && pnpm package ",
+        "start": "electron-forge start",
+        "type-check": "tsc --noEmit",
+        "type-check-main": "tsc --noEmit --project tsconfig-main.json",
+        "test": "echo \"No tests specified\"",
+        "dev": "electron-forge start",
+        "package": "electron-forge package",
+        "make": "electron-forge make",
+        "publish": "electron-forge publish",
+        "deploy": "electron-forge make",
+        "upload": "pnpm package && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm deploy",
+        "try": "pnpm package && pnpm make",
         "refresh": "pnpm upgrade --latest",
-        "postinstall": "electron-builder install-app-deps"
+        "backup": "git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm version --patch"
     },
     "eslintConfig": {
         "extends": [
@@ -63,25 +53,38 @@
         ]
     },
     "devDependencies": {
+        "@electron-forge/cli": "^7.9.0",
+        "@electron-forge/maker-deb": "^7.9.0",
+        "@electron-forge/maker-rpm": "^7.9.0",
+        "@electron-forge/maker-squirrel": "^7.9.0",
+        "@electron-forge/maker-zip": "^7.9.0",
+        "@electron-forge/plugin-fuses": "^7.9.0",
+        "@electron-forge/plugin-vite": "^7.9.0",
+        "@electron/fuses": "^2.0.0",
+        "@types/node": "^24.6.2",
+        "@types/nodemailer": "^7.0.2",
+        "@types/ping": "^0.4.4",
+        "@types/react": "^19.2.0",
+        "@types/react-dom": "^19.2.0",
+        "@vitejs/plugin-react": "^5.0.4",
         "electron": "^38.2.0",
-        "electron-builder": "^26.0.12"
+        "typescript": "^5.9.3",
+        "vite": "^7.1.9"
     },
     "author": "Marece Williams",
     "description": "Enter a description",
     "homepage": "./",
-    "main": "build/main.js",
-    "build": {
-        "productName": "Pinger",
-        "appId": "com.wbm.pinger",
-        "copyright": "WBM Tek",
-        "extends": null,
-        "files": [
-            "build/**/*",
-            "electron/*"
+    "main": ".vite/build/main.js",
+    "pnpm": {
+        "ignoredBuiltDependencies": [
+            "core-js",
+            "core-js-pure",
+            "electron",
+            "electron-winstaller"
         ],
-        "win": {
-            "icon": "public/favicon.ico"
-        }
+        "onlyBuiltDependencies": [
+            "electron"
+        ]
     },
     "repository": {
         "type": "git",

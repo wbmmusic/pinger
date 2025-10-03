@@ -44,7 +44,7 @@ export class Pingable {
         this.alarm = device.alarm || false;
         this.misses = device.misses || 0;
         this.timer = null;
-        this.updateDevice = device.updateDevice || (() => {});
+        this.updateDevice = device.updateDevice || (() => { });
     }
 
     ping = (): void => {
@@ -64,7 +64,7 @@ export class Pingable {
                 this.status = 'ALIVE';
                 this.misses = 0;
                 this.updateDevice(this.name);
-                
+
                 if (this.alarm === true) {
                     this.alarm = false;
                     console.log('Send Restored Email here');
@@ -74,7 +74,7 @@ export class Pingable {
                 this.status = 'DEAD';
                 this.misses = this.misses + 1;
                 this.updateDevice(this.name);
-                
+
                 if (this.misses === this.trys) {
                     console.log('Send Error Email Here');
                 }

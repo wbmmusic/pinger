@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-transporter.verify(function(error, _success) {
+transporter.verify(function(error: Error | null, _success: true) {
     if (error) {
         console.log(error);
     } else {
@@ -48,7 +48,7 @@ export const sendEmail = async (send: () => void): Promise<any> => {
             html: await getEmailHtml(send)
         };
 
-        transporter.sendMail(message, (err, info) => {
+        transporter.sendMail(message, (err: Error | null, info: any) => {
             if (err) reject(err);
             else resolve(info);
         });
