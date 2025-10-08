@@ -12,7 +12,7 @@
         "electron-squirrel-startup": "^1.0.1",
         "electron-updater": "^6.6.2",
         "nodemailer": "^7.0.9",
-        "ping": "^0.4.4",
+        "ping": "^1.0.0",
         "react": "^19.1.1",
         "react-bootstrap": "^2.10.10",
         "react-dom": "^19.1.1",
@@ -49,7 +49,7 @@
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.1",
         "@vitejs/plugin-react": "^5.0.4",
-        "electron": "^38.2.0",
+        "electron": "^38.2.2",
         "typescript": "^5.9.3",
         "vite": "^7.1.9"
     },
