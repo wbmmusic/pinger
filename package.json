@@ -8,7 +8,7 @@
         "@mui/icons-material": "^7.3.2",
         "@mui/material": "^7.3.2",
         "bootstrap": "^5.3.8",
-        "date-and-time": "^4.0.5",
+        "date-and-time": "^4.1.0",
         "electron-squirrel-startup": "^1.0.1",
         "electron-updater": "^6.6.2",
         "nodemailer": "^7.0.9",
