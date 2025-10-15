@@ -1,76 +1,76 @@
 {
-    "name": "pinger",
-    "version": "0.0.38",
-    "private": true,
-    "dependencies": {
-        "@emotion/react": "^11.14.0",
-        "@emotion/styled": "^11.14.1",
-        "@mui/icons-material": "^7.3.2",
-        "@mui/material": "^7.3.2",
-        "bootstrap": "^5.3.8",
-        "date-and-time": "^4.1.0",
-        "electron-squirrel-startup": "^1.0.1",
-        "electron-updater": "^6.6.2",
-        "nodemailer": "^7.0.9",
-        "ping": "^1.0.0",
-        "react": "^19.1.1",
-        "react-bootstrap": "^2.10.10",
-        "react-dom": "^19.1.1",
-        "react-router-dom": "^7.9.4",
-        "uuid": "^13.0.0"
-    },
-    "scripts": {
-        "start": "electron-forge start",
-        "type-check": "tsc --noEmit",
-        "type-check-main": "tsc --noEmit --project tsconfig-main.json",
-        "test": "echo \"No tests specified\"",
-        "dev": "electron-forge start",
-        "package": "electron-forge package",
-        "make": "electron-forge make",
-        "publish": "electron-forge publish",
-        "deploy": "electron-forge make",
-        "upload": "pnpm package && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm deploy",
-        "try": "pnpm package && pnpm make",
-        "refresh": "pnpm upgrade --latest",
-        "backup": "git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm version --patch"
-    },
-    "devDependencies": {
-        "@electron-forge/cli": "^7.10.0",
-        "@electron-forge/maker-deb": "^7.10.0",
-        "@electron-forge/maker-rpm": "^7.10.0",
-        "@electron-forge/maker-squirrel": "^7.10.0",
-        "@electron-forge/maker-zip": "^7.10.0",
-        "@electron-forge/plugin-fuses": "^7.10.0",
-        "@electron-forge/plugin-vite": "^7.10.0",
-        "@electron/fuses": "^2.0.0",
-        "@types/node": "^24.7.0",
-        "@types/nodemailer": "^7.0.2",
-        "@types/ping": "^0.4.4",
-        "@types/react": "^19.2.2",
-        "@types/react-dom": "^19.2.1",
-        "@vitejs/plugin-react": "^5.0.4",
-        "electron": "^38.2.2",
-        "typescript": "^5.9.3",
-        "vite": "^7.1.9"
-    },
-    "author": "Marece Williams",
-    "description": "Enter a description",
-    "homepage": "./",
-    "main": ".vite/build/main.js",
-    "pnpm": {
-        "ignoredBuiltDependencies": [
-            "core-js",
-            "core-js-pure",
-            "electron",
-            "electron-winstaller"
-        ],
-        "onlyBuiltDependencies": [
-            "electron"
-        ]
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/wbmmusic/pinger.git"
-    },
-    "packageManager": "pnpm@9.2.0+sha512.98a80fd11c2e7096747762304106432b3ddc67dcf54b5a8c01c93f68a2cd5e05e6821849522a06fb76284d41a2660d5e334f2ee3bbf29183bf2e739b1dafa771"
+  "name": "pinger",
+  "version": "0.0.38",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
+    "bootstrap": "^5.3.8",
+    "date-and-time": "^4.1.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.6.2",
+    "nodemailer": "^7.0.9",
+    "ping": "^1.0.0",
+    "react": "^19.1.1",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.4",
+    "uuid": "^13.0.0"
+  },
+  "scripts": {
+    "start": "electron-forge start",
+    "type-check": "tsc --noEmit",
+    "type-check-main": "tsc --noEmit --project tsconfig-main.json",
+    "test": "echo \"No tests specified\"",
+    "dev": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "deploy": "electron-forge make",
+    "upload": "pnpm package && git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm deploy",
+    "try": "pnpm package && pnpm make",
+    "refresh": "pnpm upgrade --latest",
+    "backup": "git add . && git commit -m %NPM_PACKAGE_VERSION% && git push origin master && pnpm version --patch"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-deb": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@electron-forge/plugin-vite": "^7.10.2",
+    "@electron/fuses": "^2.0.0",
+    "@types/node": "^24.7.2",
+    "@types/nodemailer": "^7.0.2",
+    "@types/ping": "^0.4.4",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "electron": "^38.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10"
+  },
+  "author": "Marece Williams",
+  "description": "Enter a description",
+  "homepage": "./",
+  "main": ".vite/build/main.js",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "core-js",
+      "core-js-pure",
+      "electron",
+      "electron-winstaller"
+    ],
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wbmmusic/pinger.git"
+  },
+  "packageManager": "pnpm@9.2.0+sha512.98a80fd11c2e7096747762304106432b3ddc67dcf54b5a8c01c93f68a2cd5e05e6821849522a06fb76284d41a2660d5e334f2ee3bbf29183bf2e739b1dafa771"
 }
