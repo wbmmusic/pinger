@@ -51,7 +51,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "electron": "^38.3.0",
     "typescript": "^5.9.3",
-    "vite": "^7.1.10"
+    "vite": "^7.1.11"
   },
   "author": "Marece Williams",
   "description": "Enter a description",
