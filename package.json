@@ -43,7 +43,7 @@
     "@electron-forge/plugin-fuses": "^7.10.2",
     "@electron-forge/plugin-vite": "^7.10.2",
     "@electron/fuses": "^2.0.0",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.0",
     "@types/nodemailer": "^7.0.3",
     "@types/ping": "^0.4.4",
     "@types/react": "^19.2.2",
