@@ -14,15 +14,20 @@ Pinger watches your critical network equipment 24/7 and sends you email alerts t
 - **Smart Detection**: Prevents false alarms with configurable retry attempts
 - **Visual Status**: Easy-to-read dashboard shows which devices are online/offline
 
-### Mobile-Friendly Email Alerts
+### Intelligent Email Alerts
 - **Mobile-Optimized**: Email alerts look great on phones - no zooming or scrolling needed
-- **Multiple Alert Types**: Different templates for device failures, recoveries, and extended outages
+- **Smart Batching**: Multiple device failures grouped into one email to avoid spam (30-second batching window)
+- **Critical Device Priority**: Mark devices as critical for immediate alerts that bypass batching
+- **Immediate Alerts**: Automatic immediate notifications when many devices fail simultaneously (configurable threshold)
+- **Recovery Notifications**: Get notified when devices come back online
 - **Location Tags**: Know exactly which building or area is affected
-- **Batch Alerts**: Multiple device failures grouped into one email to avoid spam
 
 ### Easy Setup & Management
 - **Simple Device Management**: Add devices by name and IP address with optional notes
+- **Critical Device Marking**: Flag important devices for immediate alert priority
 - **Email Configuration**: Works with Gmail, Outlook, Yahoo, or any email provider
+- **Auto-Save Settings**: All configuration changes save automatically with no manual save required
+- **Contact Information**: Optional system administrator contact details included in email alerts
 - **Test Everything**: Built-in testing for both network connectivity and email delivery
 - **Background Operation**: Runs quietly in your system tray
 
@@ -49,7 +54,9 @@ Pinger watches your critical network equipment 24/7 and sends you email alerts t
 
 **Built with modern technology** for reliability and performance:
 - Desktop application using Electron framework
-- Responsive React-based user interface
+- Responsive React-based user interface with auto-saving settings
+- Multi-threaded ping operations for improved performance and reliability
+- Intelligent event-driven email batching system
 - Secure local data storage with encrypted credentials
 - Multi-provider email support with mobile-optimized templates
 - Automatic updates to ensure latest features and security
@@ -71,8 +78,9 @@ Pinger watches your critical network equipment 24/7 and sends you email alerts t
 1. **Choose Provider**: Select Gmail, Outlook, Yahoo, or enter custom SMTP settings
 2. **Enter Credentials**: Use your email address and password (Gmail users need an "App Password")
 3. **Add Recipients**: Enter all email addresses that should receive alerts
-4. **Test Templates**: Preview and test the different alert types (Device Down, Recovery, Escalation)
-5. **Configure Rules**: Set up alert timing, cooldown periods, and batch settings
+4. **Test Templates**: Preview and test the different alert types (Device Down, Recovery)
+5. **Configure Critical Devices**: Mark important devices for immediate alerts
+6. **Configure Rules**: Set up alert timing and batch settings
 
 **Gmail Users**: You'll need to create an "App Password" in your Google Account settings under Security → 2-Step Verification → App Passwords.
 

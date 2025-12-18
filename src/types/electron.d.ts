@@ -5,6 +5,7 @@ export interface Device {
     notes: string;
     frequency: number;
     trys: number;
+    critical?: boolean;
     status?: string;
     lastChecked?: string | null;
     lastGood?: string | null;

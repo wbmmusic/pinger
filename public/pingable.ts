@@ -8,12 +8,13 @@ export interface DeviceData {
     notes: string;
     frequency: number;
     trys: number;
+    critical?: boolean;
     status?: string;
     lastChecked?: string | null;
     lastGood?: string | null;
     alarm?: boolean;
     misses?: number;
-    updateDevice?: (name: string) => void;
+    updateDevice?: (deviceId: string) => void;
 }
 
 export class Pingable {
@@ -23,13 +24,14 @@ export class Pingable {
     notes: string;
     frequency: number;
     trys: number;
+    critical: boolean;
     status: string;
     lastChecked: string | null;
     lastGood: string | null;
     alarm: boolean;
     misses: number;
     timer: NodeJS.Timeout | null;
-    updateDevice: (name: string) => void;
+    updateDevice: (deviceId: string) => void;
 
     constructor(device: DeviceData) {
         this.id = device.id;
@@ -38,6 +40,7 @@ export class Pingable {
         this.notes = device.notes;
         this.frequency = device.frequency;
         this.trys = device.trys;
+        this.critical = device.critical || false;
         this.status = device.status || 'PENDING';
         this.lastChecked = device.lastChecked || null;
         this.lastGood = device.lastGood || null;
@@ -64,7 +67,7 @@ export class Pingable {
                     this.lastChecked = now;
                     this.status = 'ALIVE';
                     this.misses = 0;
-                    this.updateDevice(this.name);
+                    this.updateDevice(this.id);
 
                     if (this.alarm === true) {
                         this.alarm = false;
@@ -74,10 +77,10 @@ export class Pingable {
                     this.lastChecked = now;
                     this.status = 'DEAD';
                     this.misses = this.misses + 1;
-                    this.updateDevice(this.name);
+                    this.updateDevice(this.id);
 
                     if (this.misses === this.trys) {
-                        console.log('Send Error Email Here');
+                        console.log(`[${now}] DEVICE FAILURE ALERT - Device: "${this.name}" (${this.address}) failed after ${this.trys} attempts. Status: ${this.status}, Last Good: ${this.lastGood || 'Never'}, Notes: ${this.notes || 'None'}`);
                     }
                 }
             })
@@ -88,10 +91,10 @@ export class Pingable {
                 this.lastChecked = now;
                 this.status = 'DEAD';
                 this.misses = this.misses + 1;
-                this.updateDevice(this.name);
+                this.updateDevice(this.id);
 
                 if (this.misses === this.trys) {
-                    console.log('Send Error Email Here');
+                    console.log(`[${now}] DEVICE FAILURE ALERT - Device: "${this.name}" (${this.address}) failed after ${this.trys} attempts. Status: ${this.status}, Last Good: ${this.lastGood || 'Never'}, Notes: ${this.notes || 'None'}`);
                 }
             });
     };

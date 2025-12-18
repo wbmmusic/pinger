@@ -10,7 +10,7 @@ interface Device {
 }
 
 interface EmailTemplateProps {
-  type: 'device-down' | 'device-recovery' | 'escalation';
+  type: 'device-down' | 'device-recovery';
   devices: Device[]; // Triggered devices (just went down/recovered)
   allAffectedDevices?: Device[]; // All currently down devices (for context)
   location: string;
@@ -49,13 +49,7 @@ export const EmailTemplate: React.FC<EmailTemplateProps> = ({
           message: devices.length === 1 ? 'The following device has come back online:' : 'The following devices have come back online:'
         };
 
-      case 'escalation':
-        return {
-          title: 'Escalation Alert - Extended Outage',
-          color: '#ffa726',
-          bgColor: '#2f2314',
-          message: 'The following device has been down for an extended period:'
-        };
+
     }
   };
 

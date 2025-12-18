@@ -39,7 +39,7 @@ export default function Settings() {
   const [originalEmailsMuted, setOriginalEmailsMuted] = useState(false);
   const [testEmailError, setTestEmailError] = useState<string>('');
   const [testEmailSuccess, setTestEmailSuccess] = useState<string>('');
-  const [activeTemplateTab, setActiveTemplateTab] = useState<'device-down' | 'device-recovery' | 'escalation'>('device-down');
+  const [activeTemplateTab, setActiveTemplateTab] = useState<'device-down' | 'device-recovery'>('device-down');
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState<string | null>(null);
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
@@ -57,7 +57,7 @@ export default function Settings() {
     const location = settings.location || 'Unknown Location';
     console.log('Generating preview with location:', location);
     window.electron
-      .invoke('generatePreviewHtml', activeTemplateTab, location)
+      .invoke('generatePreviewHtml', { type: activeTemplateTab, location })
       .then((html: string) => {
         console.log('Preview HTML generated, location in HTML:', html.includes(location));
         setPreviewHtml(html);
@@ -772,12 +772,11 @@ export default function Settings() {
             }}>
               {[
                 { id: 'device-down', label: 'Device Down', color: '#ff4757' },
-                { id: 'device-recovery', label: 'Recovery', color: '#2ed573' },
-                { id: 'escalation', label: 'Escalation', color: '#ffa726' }
+                { id: 'device-recovery', label: 'Recovery', color: '#2ed573' }
               ].map(template => (
                 <button
                   key={template.id}
-                  onClick={() => setActiveTemplateTab(template.id as 'device-down' | 'device-recovery' | 'escalation')}
+                  onClick={() => setActiveTemplateTab(template.id as 'device-down' | 'device-recovery')}
                   style={{
                     padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
                     background: activeTemplateTab === template.id ? template.color : 'transparent',
@@ -826,13 +825,11 @@ export default function Settings() {
                 backgroundColor: 'transparent',
                 color: {
                   'device-down': '#ff4757',
-                  'device-recovery': '#2ed573',
-                  'escalation': '#ffa726'
+                  'device-recovery': '#2ed573'
                 }[activeTemplateTab],
                 border: `2px solid ${{
                   'device-down': '#ff4757',
-                  'device-recovery': '#2ed573',
-                  'escalation': '#ffa726'
+                  'device-recovery': '#2ed573'
                 }[activeTemplateTab]}`,
                 opacity: (
                   !settings.testEmail || 

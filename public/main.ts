@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 import * as fs from 'fs';
 import { autoUpdater } from 'electron-updater';
 import { Pingable, DeviceData } from './pingable';
+import { EventManager } from './event-manager';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) app.quit();
@@ -14,6 +15,7 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 
 let firstReactInit = true;
 let xyz: Pingable[] = [];
+let eventManager: EventManager;
 
 const pathToUserData = app.getPath('userData');
 const pathToConfig = join(pathToUserData, 'pingConfig.json');
@@ -25,6 +27,7 @@ interface Device {
     notes: string;
     frequency: number;
     trys: number;
+    critical?: boolean;
 }
 
 interface SMTPConfig {
@@ -42,6 +45,7 @@ interface EmailSettings {
     location?: string;
     smtp?: SMTPConfig;
     testEmail?: string;
+    immediateEmailThreshold?: number;
 }
 
 interface ConfigFile {
@@ -57,6 +61,7 @@ const emptyConfig: ConfigFile = {
         addresses: [],
         subject: 'Network Issues Have Been Detected',
         location: '',
+        immediateEmailThreshold: 5,
         smtp: {
             provider: 'gmail',
             host: 'smtp.gmail.com',
@@ -141,6 +146,7 @@ interface DeviceInfo {
     notes: string;
     frequency: number;
     trys: number;
+    critical?: boolean;
 }
 
 const getDevices = (): DeviceInfo[] => {
@@ -155,6 +161,7 @@ const getDevices = (): DeviceInfo[] => {
         notes: dev.notes,
         frequency: dev.frequency,
         trys: dev.trys,
+        critical: dev.critical || false,
     }));
     return theDevices;
 };
@@ -207,14 +214,57 @@ const makeSettings = (): EmailSettings => {
         // Decrypt SMTP credentials when loading
         settings.smtp = decryptSMTPCredentials(settings.smtp);
     }
+    // Ensure immediateEmailThreshold exists
+    if (settings.immediateEmailThreshold === undefined) {
+        settings.immediateEmailThreshold = 5;
+    }
     return settings;
 };
 
 export const appSettings = (): EmailSettings => makeSettings();
 
+const getDeviceById = (id: string): DeviceInfo | null => {
+    const device = xyz.find(d => d.id === id);
+    if (!device) return null;
+    return {
+        id: device.id,
+        name: device.name,
+        address: device.address,
+        status: device.status,
+        lastChecked: device.lastChecked,
+        lastGood: device.lastGood,
+        notes: device.notes,
+        frequency: device.frequency,
+        trys: device.trys,
+        critical: device.critical || false
+    };
+};
+
+const sendEventEmail = async (emailData: any): Promise<void> => {
+    const { sendEmail } = await import('./email');
+    // This will be implemented to use the new email template structure
+    return sendEmail(() => {
+        win.webContents.send('makeEmailBody');
+    });
+};
+
 const mainInit = (): void => {
-    const updateDevices = (_name: string): void => {
+    // Initialize EventManager
+    eventManager = new EventManager(
+        getDeviceById,
+        () => getFile().emailsMuted || false,
+        makeSettings,
+        sendEventEmail
+    );
+
+    const updateDevices = (deviceId: string): void => {
         win.webContents.send('devices', getDevices());
+        
+        // Notify EventManager of state change
+        const device = xyz.find(d => d.id === deviceId);
+        if (device) {
+            eventManager.onDeviceStateChange(device.id, device.status, device.critical || false);
+        }
     };
 
     const makeDevices = (): void => {
@@ -254,7 +304,7 @@ const mainInit = (): void => {
                 xyz.push(new Pingable(pingableDevice));
                 xyz[xyz.length - 1].ping();
             } else {
-                const keys: (keyof Device)[] = ['name', 'address', 'notes', 'frequency', 'trys'];
+                const keys: (keyof Device)[] = ['name', 'address', 'notes', 'frequency', 'trys', 'critical'];
                 let changed = false;
 
                 keys.forEach(key => {
@@ -284,7 +334,8 @@ const mainInit = (): void => {
             address: updatedDevice.address,
             notes: updatedDevice.notes,
             frequency: updatedDevice.frequency,
-            trys: updatedDevice.trys
+            trys: updatedDevice.trys,
+            critical: updatedDevice.critical || false
         };
         const tempFile = getFile();
         const index = tempFile.devices.findIndex(dev => dev.id === updatedDevice.id);
@@ -316,7 +367,8 @@ const mainInit = (): void => {
             address: newDevice.address,
             notes: newDevice.notes,
             frequency: newDevice.frequency,
-            trys: newDevice.trys
+            trys: newDevice.trys,
+            critical: (newDevice as any).critical || false
         };
         tempFile.devices.push(tempDevice);
         saveFile(tempFile);
@@ -444,10 +496,10 @@ const mainInit = (): void => {
         }
     });
 
-    ipcMain.handle('generatePreviewHtml', async (_e, type: 'device-down' | 'device-recovery' | 'escalation', location: string) => {
+    ipcMain.handle('generatePreviewHtml', async (_e, params: { type: 'device-down' | 'device-recovery', location: string }) => {
         try {
             const { generatePreviewHtml } = await import('./email');
-            return generatePreviewHtml(type, location);
+            return generatePreviewHtml(params.type, params.location);
         } catch (error) {
             console.error('Generate preview HTML error:', error);
             throw error;
@@ -575,4 +627,9 @@ app.on('before-quit', () => {
     import('./ping-manager').then(({ pingManager }) => {
         pingManager.destroy();
     });
+    
+    // Cleanup event manager
+    if (eventManager) {
+        eventManager.destroy();
+    }
 });

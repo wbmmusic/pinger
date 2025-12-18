@@ -2,6 +2,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { Table } from "./Table";
+
 import { Input } from "./Input";
 import { Textarea } from "./Textarea";
 import { NumberInput } from "./NumberInput";
@@ -187,6 +188,11 @@ export default function StatusTable() {
       device: { ...old.device, notes: theNotes },
     }));
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    return dateString.replace(/2025/g, '25');
+  };
+
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -264,8 +270,8 @@ export default function StatusTable() {
           <td style={styles}>{sortedDevices[i].name}</td>
           <td style={styles}>{sortedDevices[i].address}</td>
           <td style={styles}>{sortedDevices[i].status}</td>
-          <td style={styles}>{sortedDevices[i].lastChecked}</td>
-          <td style={styles}>{sortedDevices[i].lastGood}</td>
+          <td style={styles}>{formatDate(sortedDevices[i].lastChecked || '')}</td>
+          <td style={styles}>{formatDate(sortedDevices[i].lastGood || '')}</td>
           <td style={{ ...styles, textAlign: 'center' }}>
             <Button
               onClick={() => window.electron.send("pingOne", sortedDevices[i])}
@@ -414,6 +420,41 @@ export default function StatusTable() {
                   onChange={e => changeNotes(e.target.value)}
                   style={{ minHeight: '60px' }}
                 />
+              </div>
+
+              <div style={{ marginBottom: theme.spacing.md }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: theme.spacing.xs,
+                  color: theme.colors.text,
+                  fontSize: theme.fontSize.sm,
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editDeviceModal.device.critical || false}
+                    onChange={e => setEditDeviceModal(old => ({
+                      ...old,
+                      device: { ...old.device, critical: e.target.checked }
+                    }))}
+                    style={{ 
+                      width: '16px', 
+                      height: '16px',
+                      accentColor: theme.colors.danger
+                    }}
+                  />
+                  Critical Device (immediate email alerts)
+                </label>
+                <div style={{ 
+                  fontSize: theme.fontSize.xs, 
+                  color: theme.colors.muted,
+                  marginTop: theme.spacing.xs,
+                  marginLeft: '24px'
+                }}>
+                  Critical devices bypass email batching and send immediate alerts when they fail
+                </div>
               </div>
             </div>
 

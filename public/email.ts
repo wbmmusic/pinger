@@ -90,7 +90,7 @@ export const sendTestEmail = async (settings: EmailSettings): Promise<string> =>
     }
 };
 
-export const generatePreviewHtml = (type: 'device-down' | 'device-recovery' | 'escalation', location: string) => {
+export const generatePreviewHtml = (type: 'device-down' | 'device-recovery', location: string) => {
     const sampleDevices = [{
         id: 'test-1',
         name: 'Test Router',
@@ -134,7 +134,7 @@ export const generatePreviewHtml = (type: 'device-down' | 'device-recovery' | 'e
     );
 };
 
-const generateEmailHtml = (type: 'device-down' | 'device-recovery' | 'escalation', location: string) => {
+const generateEmailHtml = (type: 'device-down' | 'device-recovery', location: string) => {
     const sampleDevices = [{
         id: 'test-1',
         name: 'Test Router',
@@ -191,8 +191,7 @@ export const sendTemplateTestEmail = async (settings: EmailSettings & { template
 
     const typeConfig: any = {
         'device-down': { title: 'Device Alert - Network Issue Detected', color: '#ff4757', status: '❌ OFFLINE' },
-        'device-recovery': { title: 'Device Recovery - Network Restored', color: '#2ed573', status: '✓ ONLINE' },
-        'escalation': { title: 'Escalation Alert - Extended Outage', color: '#ffa726', status: '⚠️ EXTENDED OUTAGE' }
+        'device-recovery': { title: 'Device Recovery - Network Restored', color: '#2ed573', status: '✓ ONLINE' }
     };
 
     const config = typeConfig[settings.templateType] || typeConfig['device-down'];
