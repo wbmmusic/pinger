@@ -87,6 +87,13 @@ pnpm make
 ### Auto-Start Setup
 Enable auto-launch through the Settings menu to start monitoring on Windows boot with system tray operation.
 
+## Security & Privacy
+
+- **Local Data Storage**: All configuration data (devices, settings, credentials) is stored locally on your machine in encrypted JSON files
+- **Encrypted Credentials**: SMTP passwords are encrypted using Electron's safeStorage API before being saved to disk
+- **No Cloud Dependencies**: No data is sent to external services except for your configured email notifications
+- **User-Controlled**: You maintain full control over your network monitoring data and email configurations
+
 ## Target Users
 
 **General-purpose tool for network administrators and IT professionals** monitoring:
