@@ -3,11 +3,12 @@ import { useTheme } from '../theme/ThemeProvider';
 
 type InputSize = 'sm' | 'md' | 'lg';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  size?: InputSize;
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  inputSize?: InputSize;
+  size?: number; // Allow native HTML size attribute
 }
 
-export const Input: React.FC<InputProps> = ({ size = 'md', style, ...props }) => {
+export const Input: React.FC<InputProps> = ({ inputSize = 'md', style, ...props }) => {
   const theme = useTheme();
   
   const getSizeStyles = (size: InputSize) => {
@@ -31,7 +32,7 @@ export const Input: React.FC<InputProps> = ({ size = 'md', style, ...props }) =>
   };
   
   const inputStyles: React.CSSProperties = {
-    ...getSizeStyles(size),
+    ...getSizeStyles(inputSize),
     backgroundColor: 'transparent',
     color: theme.colors.text,
     border: 'none',

@@ -3,6 +3,7 @@ import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { Input } from "./Input";
 import { Textarea } from "./Textarea";
+import { NumberInput } from "./NumberInput";
 import { Table } from "./Table";
 import { IconButton } from "./IconButton";
 import { Tooltip } from "./Tooltip";
@@ -71,6 +72,7 @@ export default function Top() {
   const [devices, setDevices] = useState<any[]>([]);
   const [closeWindowModal, setCloseWindowModal] = useState<CloseWindowModal>({ show: false });
   const [muteCloseWin, setMuteCloseWin] = useState<boolean>(false);
+  const [rememberChoice, setRememberChoice] = useState<boolean>(false);
 
   const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal);
 
@@ -317,17 +319,16 @@ export default function Top() {
                       Ping Frequency
                     </label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                      <Input
-                        type="number"
-                        min="15"
-                        max="720"
+                      <NumberInput
                         value={newDeviceModal.frequency}
-                        onChange={e => {
-                          setNewDeviceModal(old => ({ ...old, frequency: parseFloat(e.target.value) || 15 }));
+                        onChange={value => {
+                          setNewDeviceModal(old => ({ ...old, frequency: value }));
                           if (validationErrors.frequency) {
                             setValidationErrors(prev => ({ ...prev, frequency: '' }));
                           }
                         }}
+                        min={15}
+                        max={720}
                         style={{
                           width: '80px',
                           borderColor: validationErrors.frequency ? theme.colors.danger : theme.colors.primary,
@@ -358,17 +359,16 @@ export default function Top() {
                       Retry Attempts
                     </label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="100"
+                      <NumberInput
                         value={newDeviceModal.trys}
-                        onChange={e => {
-                          setNewDeviceModal(old => ({ ...old, trys: parseInt(e.target.value) || 1 }));
+                        onChange={value => {
+                          setNewDeviceModal(old => ({ ...old, trys: value }));
                           if (validationErrors.trys) {
                             setValidationErrors(prev => ({ ...prev, trys: '' }));
                           }
                         }}
+                        min={1}
+                        max={100}
                         style={{
                           width: '80px',
                           borderColor: validationErrors.trys ? theme.colors.danger : theme.colors.primary,
@@ -425,6 +425,9 @@ export default function Top() {
   const closeCloseWindowModal = () => setCloseWindowModal({ show: false });
 
   const closeWindow = () => {
+    if (rememberChoice) {
+      window.electron.invoke("setCloseWindowWarningMute", true);
+    }
     window.electron
       .invoke("closeWindow")
       .then((res: string) => {
@@ -435,6 +438,10 @@ export default function Top() {
   };
 
   const exitApp = () => {
+    if (rememberChoice) {
+      // Set a different flag for "always exit" - we'll need to add this to main.ts
+      window.electron.invoke("setCloseWindowAlwaysExit", true);
+    }
     window.electron
       .invoke("exitApp")
       .then((res: void) => console.log(res))
@@ -461,27 +468,42 @@ export default function Top() {
             <Modal.Title>Close Warning</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div>Closing this window does not close Pinger.</div>
-            <div>To fully close pinger click the "Stop Pinger" button.</div>
-            <div
-              style={{ display: "flex", alignItems: "center", padding: "10px" }}
-            >
+            <div style={{ marginBottom: theme.spacing.md, color: theme.colors.text }}>
+              What would you like to do when closing the window?
+            </div>
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              padding: theme.spacing.md,
+              backgroundColor: theme.colors.dark,
+              borderRadius: theme.borderRadius,
+              border: `1px solid ${theme.colors.primary}40`
+            }}>
               <input
-                checked={muteCloseWin}
                 type="checkbox"
-                onChange={handleCloseWindowWarinigMute}
+                checked={rememberChoice}
+                onChange={e => setRememberChoice(e.target.checked)}
+                style={{
+                  accentColor: theme.colors.primary,
+                  transform: 'scale(1.2)',
+                  marginRight: theme.spacing.sm
+                }}
               />
-              <div style={{ paddingLeft: "10px" }}>
-                Always run in background and hide this warning
-              </div>
+              <label style={{ 
+                color: theme.colors.text,
+                fontSize: theme.fontSize.sm,
+                cursor: 'pointer'
+              }}>
+                Remember my decision and don't ask again
+              </label>
             </div>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="danger" onClick={exitApp}>
-              Stop Pinger
+              Exit Completely
             </Button>
             <Button variant="success" onClick={closeWindow}>
-              Continue in background
+              Hide to Tray
             </Button>
           </Modal.Footer>
         </Modal>

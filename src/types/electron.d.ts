@@ -24,6 +24,13 @@ export interface EmailSettings {
     subject: string;
     location?: string;
     smtp?: SMTPConfig;
+    testEmail?: string;
+    contactName?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    contactTitle?: string;
+    includeContactInEmails?: boolean;
+    muteCloseWarning?: boolean;
 }
 
 export interface UpdaterInfo {

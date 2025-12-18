@@ -569,3 +569,10 @@ app.on('ready', () => {
 app.on('activate', () => {
     if (!win) createWindow();
 });
+
+app.on('before-quit', () => {
+    // Cleanup ping workers
+    import('./ping-manager').then(({ pingManager }) => {
+        pingManager.destroy();
+    });
+});

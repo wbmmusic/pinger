@@ -11,6 +11,7 @@ export interface Theme {
     background: string;
     text: string;
     border: string;
+    muted: string;
   };
   spacing: {
     xs: string;
@@ -21,6 +22,7 @@ export interface Theme {
   };
   borderRadius: string;
   fontSize: {
+    xs: string;
     sm: string;
     md: string;
     lg: string;
@@ -46,6 +48,7 @@ export const defaultTheme: Theme = {
     background: 'linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 50%, #0F0F0F 100%)',
     text: '#E8EAED',
     border: '#2D3748',
+    muted: '#6c757d',
   },
   spacing: {
     xs: '4px',
@@ -56,6 +59,7 @@ export const defaultTheme: Theme = {
   },
   borderRadius: '4px',
   fontSize: {
+    xs: '10px',
     sm: '12px',
     md: '14px',
     lg: '16px',

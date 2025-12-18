@@ -4,6 +4,7 @@ import { Modal } from "./Modal";
 import { Table } from "./Table";
 import { Input } from "./Input";
 import { Textarea } from "./Textarea";
+import { NumberInput } from "./NumberInput";
 import { useTheme } from "../theme/ThemeProvider";
 import SettingsTwoToneIcon from "@mui/icons-material/SettingsTwoTone";
 import { Device } from "../types/electron";
@@ -36,6 +37,7 @@ export default function StatusTable() {
   const [editDeviceModal, setEditDeviceModal] = useState<EditDeviceModal>(
     defaultEditDeviceModal
   );
+  const [originalDevice, setOriginalDevice] = useState<Device | null>(null);
   const [deleteDeviceModal, setDeleteDeviceModal] = useState<DeleteDeviceModal>(
     defaultDeleteDeviceModal
   );
@@ -58,6 +60,7 @@ export default function StatusTable() {
 
   const handleClose = () => {
     setEditDeviceModal(defaultEditDeviceModal);
+    setOriginalDevice(null);
     setValidationErrors({});
   };
 
@@ -189,7 +192,7 @@ export default function StatusTable() {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection(field === 'status' ? 'asc' : 'asc');
     }
   };
 
@@ -209,9 +212,10 @@ export default function StatusTable() {
           bVal = b.address.toLowerCase();
           break;
         case 'status':
+          // DEAD first, then PENDING, then ALIVE
           const statusOrder = { 'DEAD': 0, 'PENDING': 1, 'ALIVE': 2 };
-          aVal = statusOrder[a.status as keyof typeof statusOrder] || 3;
-          bVal = statusOrder[b.status as keyof typeof statusOrder] || 3;
+          aVal = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+          bVal = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
           break;
         case 'lastChecked':
           aVal = new Date(a.lastChecked || 0).getTime();
@@ -273,9 +277,10 @@ export default function StatusTable() {
           <td style={{ ...styles, textAlign: 'center' }}>
             <div
               style={{ display: "inline-block", cursor: "pointer" }}
-              onClick={() =>
-                setEditDeviceModal({ show: true, device: sortedDevices[i] })
-              }
+              onClick={() => {
+                setEditDeviceModal({ show: true, device: sortedDevices[i] });
+                setOriginalDevice(sortedDevices[i]);
+              }}
             >
               <SettingsTwoToneIcon />
             </div>
@@ -437,12 +442,19 @@ export default function StatusTable() {
                     Ping Frequency
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                    <Input
-                      type="number"
-                      min="15"
-                      max="720"
+                    <NumberInput
                       value={editDeviceModal.device.frequency}
-                      onChange={e => changeFrequency(e.target.value)}
+                      onChange={value => {
+                        setEditDeviceModal(old => ({
+                          ...old,
+                          device: { ...old.device, frequency: value },
+                        }));
+                        if (validationErrors.frequency) {
+                          setValidationErrors(prev => ({ ...prev, frequency: '' }));
+                        }
+                      }}
+                      min={15}
+                      max={720}
                       style={{ width: '80px' }}
                     />
                     <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>seconds</span>
@@ -460,12 +472,19 @@ export default function StatusTable() {
                     Retry Attempts
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="100"
+                    <NumberInput
                       value={editDeviceModal.device.trys}
-                      onChange={e => changeTrys(e.target.value)}
+                      onChange={value => {
+                        setEditDeviceModal(old => ({
+                          ...old,
+                          device: { ...old.device, trys: value },
+                        }));
+                        if (validationErrors.trys) {
+                          setValidationErrors(prev => ({ ...prev, trys: '' }));
+                        }
+                      }}
+                      min={1}
+                      max={100}
                       style={{ width: '80px' }}
                     />
                     <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>tries</span>
@@ -495,11 +514,21 @@ export default function StatusTable() {
               size="sm" 
               variant="primary" 
               onClick={updateDevice}
-              disabled={Object.keys(validationErrors).length > 0 || !editDeviceModal.device.name.trim() || !editDeviceModal.device.address.trim()}
+              disabled={
+                Object.keys(validationErrors).length > 0 || 
+                !editDeviceModal.device.name.trim() || 
+                !editDeviceModal.device.address.trim() ||
+                !originalDevice ||
+                JSON.stringify(editDeviceModal.device) === JSON.stringify(originalDevice)
+              }
               style={{
-                background: Object.keys(validationErrors).length > 0 || !editDeviceModal.device.name.trim() || !editDeviceModal.device.address.trim() 
-                  ? theme.colors.muted 
-                  : `linear-gradient(45deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                background: (
+                  Object.keys(validationErrors).length > 0 || 
+                  !editDeviceModal.device.name.trim() || 
+                  !editDeviceModal.device.address.trim() ||
+                  !originalDevice ||
+                  JSON.stringify(editDeviceModal.device) === JSON.stringify(originalDevice)
+                ) ? theme.colors.muted : `linear-gradient(45deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
                 border: 'none',
                 boxShadow: `0 0 15px ${theme.colors.primary}40`,
                 opacity: Object.keys(validationErrors).length > 0 || !editDeviceModal.device.name.trim() || !editDeviceModal.device.address.trim() ? 0.5 : 1,

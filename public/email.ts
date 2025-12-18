@@ -49,9 +49,9 @@ export const testEmailConnection = async (settings: EmailSettings): Promise<stri
     if (!settings.smtp) {
         throw new Error('SMTP configuration not found');
     }
-    
+
     const transporter = createTransporter(settings.smtp);
-    
+
     try {
         await transporter.verify();
         return 'SMTP connection successful';
@@ -64,13 +64,13 @@ export const sendTestEmail = async (settings: EmailSettings): Promise<string> =>
     if (!settings.smtp) {
         throw new Error('SMTP configuration not found');
     }
-    
+
     if (settings.addresses.length === 0) {
         throw new Error('No recipient addresses configured');
     }
-    
+
     const transporter = createTransporter(settings.smtp);
-    
+
     const message = {
         from: {
             name: 'Pinger Test',
@@ -81,7 +81,7 @@ export const sendTestEmail = async (settings: EmailSettings): Promise<string> =>
         text: 'This is a test email from Pinger to verify your email configuration is working correctly.',
         html: '<p>This is a test email from <strong>Pinger</strong> to verify your email configuration is working correctly.</p>'
     };
-    
+
     try {
         const info = await transporter.sendMail(message);
         return `Test email sent successfully: ${info.messageId}`;
@@ -99,7 +99,7 @@ export const generatePreviewHtml = (type: 'device-down' | 'device-recovery' | 'e
         lastChecked: new Date().toISOString(),
         lastGood: '12/18/2025 08:30:15 AM'
     }];
-    
+
     const allAffectedDevices = [{
         id: 'main-router',
         name: 'Main Router',
@@ -122,7 +122,7 @@ export const generatePreviewHtml = (type: 'device-down' | 'device-recovery' | 'e
         lastChecked: new Date().toISOString(),
         lastGood: '08:25 AM'
     }];
-    
+
     return renderToString(
         React.createElement(EmailTemplate, {
             type,
@@ -143,7 +143,7 @@ const generateEmailHtml = (type: 'device-down' | 'device-recovery' | 'escalation
         lastChecked: new Date().toISOString(),
         lastGood: '12/18/2025 08:30:15 AM'
     }];
-    
+
     const allAffectedDevices = [{
         id: 'main-router',
         name: 'Main Router',
@@ -166,7 +166,7 @@ const generateEmailHtml = (type: 'device-down' | 'device-recovery' | 'escalation
         lastChecked: new Date().toISOString(),
         lastGood: '08:25 AM'
     }];
-    
+
     return renderToString(
         React.createElement(EmailTemplate, {
             type,
@@ -182,23 +182,23 @@ export const sendTemplateTestEmail = async (settings: EmailSettings & { template
     if (!settings.smtp) {
         throw new Error('SMTP configuration not found');
     }
-    
+
     if (!settings.testEmail) {
         throw new Error('Test email address not configured');
     }
-    
+
     const transporter = createTransporter(settings.smtp);
-    
+
     const typeConfig: any = {
         'device-down': { title: 'Device Alert - Network Issue Detected', color: '#ff4757', status: '❌ OFFLINE' },
         'device-recovery': { title: 'Device Recovery - Network Restored', color: '#2ed573', status: '✓ ONLINE' },
         'escalation': { title: 'Escalation Alert - Extended Outage', color: '#ffa726', status: '⚠️ EXTENDED OUTAGE' }
     };
-    
+
     const config = typeConfig[settings.templateType] || typeConfig['device-down'];
-    
+
     const html = generatePreviewHtml(settings.templateType as any, settings.location || 'Unknown Location');
-    
+
     const message = {
         from: {
             name: 'Pinger Test',
@@ -209,7 +209,7 @@ export const sendTemplateTestEmail = async (settings: EmailSettings & { template
         text: `This is a test ${settings.templateType} email from Pinger.`,
         html: html
     };
-    
+
     try {
         const info = await transporter.sendMail(message);
         return `Template test email sent successfully: ${info.messageId}`;
@@ -223,12 +223,12 @@ export const sendEmail = async (send: () => void): Promise<any> => {
     return new Promise(async (resolve, reject) => {
         const eSettings = mainModule.appSettings();
         console.log(eSettings);
-        
+
         if (!eSettings.smtp) {
             reject(new Error('SMTP configuration not found'));
             return;
         }
-        
+
         const transporter = createTransporter(eSettings.smtp);
 
         const message = {

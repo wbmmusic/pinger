@@ -4,6 +4,8 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { Select } from './Select';
 import { Checkbox } from './Checkbox';
+import { Modal } from './Modal';
+import { NumberInput } from './NumberInput';
 import { EmailSettings, SMTPConfig } from '../types/electron';
 import PersonAddAlt1TwoToneIcon from '@mui/icons-material/PersonAddAlt1TwoTone';
 import PersonOffTwoToneIcon from '@mui/icons-material/PersonOffTwoTone';
@@ -39,6 +41,16 @@ export default function Settings() {
   const [testEmailSuccess, setTestEmailSuccess] = useState<string>('');
   const [activeTemplateTab, setActiveTemplateTab] = useState<'device-down' | 'device-recovery' | 'escalation'>('device-down');
   const [previewHtml, setPreviewHtml] = useState<string>('');
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState<string | null>(null);
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const autoSaveSettings = (updatedSettings: EmailSettings) => {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    const timer = setTimeout(() => {
+      window.electron.invoke('updateSettings', updatedSettings);
+    }, 1000);
+    setAutoSaveTimer(timer);
+  };
 
   // Generate preview HTML when template tab or location changes
   useEffect(() => {
@@ -64,7 +76,7 @@ export default function Settings() {
           const defaultSettings = {
             ...res,
             smtp: {
-              provider: 'gmail',
+              provider: 'gmail' as const,
               host: 'smtp.gmail.com',
               port: 587,
               secure: false,
@@ -125,22 +137,43 @@ export default function Settings() {
     }));
   };
 
+  const validateEmails = (input: string): boolean => {
+    if (!input.trim()) return false;
+    const emails = input.split(',').map(email => email.trim());
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emails.every(email => emailRegex.test(email));
+  };
+
   const addEmail = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newAddress) {
-      setSettings(old => ({
-        ...old,
-        addresses: [...old.addresses, newAddress]
-      }));
+    if (newAddress && validateEmails(newAddress)) {
+      const emails = newAddress.split(',').map(email => email.trim());
+      const updatedSettings = {
+        ...settings,
+        addresses: [...settings.addresses, ...emails]
+      };
+      setSettings(updatedSettings);
+      window.electron.invoke('updateSettings', updatedSettings);
       setNewAddress('');
     }
   };
 
   const deleteEmail = (email: string) => {
-    setSettings(old => ({
-      ...old,
-      addresses: old.addresses.filter(addr => addr !== email)
-    }));
+    console.log('Delete email clicked:', email);
+    setDeleteConfirmEmail(email);
+    console.log('Modal should open for:', email);
+  };
+
+  const confirmDeleteEmail = () => {
+    if (deleteConfirmEmail) {
+      const updatedSettings = {
+        ...settings,
+        addresses: settings.addresses.filter(addr => addr !== deleteConfirmEmail)
+      };
+      setSettings(updatedSettings);
+      window.electron.invoke('updateSettings', updatedSettings);
+      setDeleteConfirmEmail(null);
+    }
   };
 
   const saveSettings = () => {
@@ -371,64 +404,84 @@ export default function Settings() {
               <Input
                 placeholder="Enter a descriptive location name"
                 value={settings.location}
-                onChange={e => setSettings(old => ({ ...old, location: e.target.value }))}
+                onChange={e => {
+                  const updatedSettings = { ...settings, location: e.target.value };
+                  setSettings(updatedSettings);
+                  autoSaveSettings(updatedSettings);
+                }}
               />
             </div>
 
-            {/* Email Subject */}
-            <div style={{ marginBottom: theme.spacing.lg }}>
-              <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm }}>Email Subject</h3>
-              <Input
-                placeholder="ie. Network Error Detected"
-                value={settings.subject}
-                onChange={e => setSettings(old => ({ ...old, subject: e.target.value }))}
-              />
-            </div>
 
-            {/* Email Recipients */}
+
+            {/* Contact Information */}
             <div style={{ marginBottom: theme.spacing.lg }}>
-              <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm }}>Email Recipients</h3>
-              <form onSubmit={addEmail}>
-                <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
+              <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm }}>Contact Information</h3>
+              <p style={{ color: theme.colors.secondary, fontSize: theme.fontSize.sm, marginBottom: theme.spacing.md, fontStyle: 'italic' }}>
+                Optional: Contact details for the person managing this monitoring system
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.md, marginBottom: theme.spacing.sm }}>
+                <div>
+                  <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block', fontSize: theme.fontSize.sm, fontWeight: 'bold' }}>Contact Name:</label>
                   <Input
-                    placeholder="example@example.com"
-                    type="email"
-                    value={newAddress}
-                    onChange={e => setNewAddress(e.target.value)}
-                  />
-                  <Button type="submit" variant="outline-primary">
-                    <PersonAddAlt1TwoToneIcon />
-                  </Button>
-                </div>
-              </form>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing.xs }}>
-                {settings.addresses.map((email, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      backgroundColor: theme.colors.dark,
-                      color: theme.colors.text,
-                      border: `1px solid ${theme.colors.primary}`,
-                      padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
-                      borderRadius: theme.borderRadius,
-                      fontSize: theme.fontSize.sm,
+                    placeholder="Contact Name"
+                    value={settings.contactName || ''}
+                    onChange={e => {
+                      const updatedSettings = { ...settings, contactName: e.target.value };
+                      setSettings(updatedSettings);
+                      autoSaveSettings(updatedSettings);
                     }}
-                  >
-                    {email}
-                    <PersonOffTwoToneIcon
-                      style={{ 
-                        marginLeft: theme.spacing.xs, 
-                        cursor: 'pointer', 
-                        fontSize: '16px',
-                        color: theme.colors.danger
-                      }}
-                      onClick={() => deleteEmail(email)}
-                    />
-                  </div>
-                ))}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block', fontSize: theme.fontSize.sm, fontWeight: 'bold' }}>Phone Number:</label>
+                  <Input
+                    placeholder="Phone Number"
+                    value={settings.contactPhone || ''}
+                    onChange={e => {
+                      const updatedSettings = { ...settings, contactPhone: e.target.value };
+                      setSettings(updatedSettings);
+                      autoSaveSettings(updatedSettings);
+                    }}
+                  />
+                </div>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.md, marginBottom: theme.spacing.sm }}>
+                <div>
+                  <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block', fontSize: theme.fontSize.sm, fontWeight: 'bold' }}>Contact Email:</label>
+                  <Input
+                    placeholder="Contact Email"
+                    type="email"
+                    value={settings.contactEmail || ''}
+                    onChange={e => {
+                      const updatedSettings = { ...settings, contactEmail: e.target.value };
+                      setSettings(updatedSettings);
+                      autoSaveSettings(updatedSettings);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block', fontSize: theme.fontSize.sm, fontWeight: 'bold' }}>Title/Role:</label>
+                  <Input
+                    placeholder="Title/Role"
+                    value={settings.contactTitle || ''}
+                    onChange={e => {
+                      const updatedSettings = { ...settings, contactTitle: e.target.value };
+                      setSettings(updatedSettings);
+                      autoSaveSettings(updatedSettings);
+                    }}
+                  />
+                </div>
+              </div>
+              <Checkbox
+                label="Include contact information in email alerts"
+                checked={settings.includeContactInEmails || false}
+                onChange={e => {
+                  const updatedSettings = { ...settings, includeContactInEmails: e.target.checked };
+                  setSettings(updatedSettings);
+                  autoSaveSettings(updatedSettings);
+                }}
+              />
             </div>
 
             {/* Autostart */}
@@ -438,6 +491,16 @@ export default function Settings() {
                 label="Start automatically with Windows"
                 checked={autoLaunch}
                 onChange={e => handleAutoLaunchChange(e.target.checked)}
+              />
+              <Checkbox
+                label="Hide close confirmation dialog"
+                checked={settings.muteCloseWarning || false}
+                onChange={e => {
+                  const updatedSettings = { ...settings, muteCloseWarning: e.target.checked };
+                  setSettings(updatedSettings);
+                  autoSaveSettings(updatedSettings);
+                  window.electron.invoke('setCloseWindowWarningMute', e.target.checked);
+                }}
               />
             </div>
           </div>
@@ -456,7 +519,25 @@ export default function Settings() {
                 <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block' }}>Provider:</label>
                 <Select
                   value={settings.smtp?.provider || 'gmail'}
-                  onChange={e => handleProviderChange(e.target.value as SMTPConfig['provider'])}
+                  onChange={e => {
+                    handleProviderChange(e.target.value as SMTPConfig['provider']);
+                    const configs = {
+                      gmail: { host: 'smtp.gmail.com', port: 587, secure: false },
+                      outlook: { host: 'smtp-mail.outlook.com', port: 587, secure: false },
+                      yahoo: { host: 'smtp.mail.yahoo.com', port: 587, secure: false },
+                      custom: { host: '', port: 587, secure: false }
+                    };
+                    const provider = e.target.value as SMTPConfig['provider'];
+                    const updatedSettings = {
+                      ...settings,
+                      smtp: {
+                        ...settings.smtp!,
+                        provider,
+                        ...configs[provider]
+                      }
+                    };
+                    autoSaveSettings(updatedSettings);
+                  }}
                 >
                   <option value="gmail">Gmail</option>
                   <option value="outlook">Outlook</option>
@@ -470,7 +551,11 @@ export default function Settings() {
                   placeholder="Email address"
                   type="email"
                   value={settings.smtp?.user || ''}
-                  onChange={e => updateSMTP('user', e.target.value)}
+                  onChange={e => {
+                    updateSMTP('user', e.target.value);
+                    const updatedSettings = { ...settings, smtp: { ...settings.smtp!, user: e.target.value } };
+                    autoSaveSettings(updatedSettings);
+                  }}
                 />
               </div>
               <div style={{ marginBottom: theme.spacing.sm }}>
@@ -489,7 +574,11 @@ export default function Settings() {
                     }
                     type={showPassword ? 'text' : 'password'}
                     value={settings.smtp?.pass || ''}
-                    onChange={e => updateSMTP('pass', e.target.value)}
+                    onChange={e => {
+                      updateSMTP('pass', e.target.value);
+                      const updatedSettings = { ...settings, smtp: { ...settings.smtp!, pass: e.target.value } };
+                      autoSaveSettings(updatedSettings);
+                    }}
                     style={{ paddingRight: '50px' }}
                   />
                   <button
@@ -530,7 +619,11 @@ export default function Settings() {
                   placeholder="admin@company.com (for test emails only)"
                   type="email"
                   value={settings.testEmail || ''}
-                  onChange={e => setSettings(old => ({ ...old, testEmail: e.target.value }))}
+                  onChange={e => {
+                    const updatedSettings = { ...settings, testEmail: e.target.value };
+                    setSettings(updatedSettings);
+                    autoSaveSettings(updatedSettings);
+                  }}
                 />
                 <div style={{ color: theme.colors.secondary, fontSize: theme.fontSize.xs, marginTop: theme.spacing.xs, fontStyle: 'italic' }}>
                   Test emails will be sent here instead of to all recipients
@@ -547,21 +640,34 @@ export default function Settings() {
                     <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block' }}>SMTP Host:</label>
                     <Input
                       value={settings.smtp?.host || ''}
-                      onChange={e => updateSMTP('host', e.target.value)}
+                      onChange={e => {
+                        updateSMTP('host', e.target.value);
+                        const updatedSettings = { ...settings, smtp: { ...settings.smtp!, host: e.target.value } };
+                        autoSaveSettings(updatedSettings);
+                      }}
                     />
                   </div>
                   <div style={{ marginBottom: theme.spacing.sm }}>
                     <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block' }}>Port:</label>
-                    <Input
-                      type="number"
+                    <NumberInput
                       value={settings.smtp?.port || 587}
-                      onChange={e => updateSMTP('port', parseInt(e.target.value))}
+                      onChange={value => {
+                        updateSMTP('port', value);
+                        const updatedSettings = { ...settings, smtp: { ...settings.smtp!, port: value } };
+                        autoSaveSettings(updatedSettings);
+                      }}
+                      min={1}
+                      max={65535}
                     />
                   </div>
                   <Checkbox
                     label="Use SSL/TLS (port 465)"
                     checked={settings.smtp?.secure || false}
-                    onChange={e => updateSMTP('secure', e.target.checked)}
+                    onChange={e => {
+                      updateSMTP('secure', e.target.checked);
+                      const updatedSettings = { ...settings, smtp: { ...settings.smtp!, secure: e.target.checked } };
+                      autoSaveSettings(updatedSettings);
+                    }}
                   />
                 </div>
               )}
@@ -671,7 +777,7 @@ export default function Settings() {
               ].map(template => (
                 <button
                   key={template.id}
-                  onClick={() => setActiveTemplateTab(template.id)}
+                  onClick={() => setActiveTemplateTab(template.id as 'device-down' | 'device-recovery' | 'escalation')}
                   style={{
                     padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
                     background: activeTemplateTab === template.id ? template.color : 'transparent',
@@ -778,6 +884,72 @@ export default function Settings() {
           </div>
         );
 
+      case 'recipients':
+        return (
+          <div>
+            {/* Email Recipients */}
+            <div style={{ marginBottom: theme.spacing.lg }}>
+              <h3 style={{ color: theme.colors.text, marginBottom: theme.spacing.sm }}>Email Recipients</h3>
+              <p style={{ color: theme.colors.secondary, fontSize: theme.fontSize.sm, marginBottom: theme.spacing.md, fontStyle: 'italic' }}>
+                Add email addresses that should receive network monitoring alerts
+              </p>
+              <form onSubmit={addEmail}>
+                <div style={{ display: 'flex', gap: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
+                  <Input
+                    placeholder="example@example.com or email1@domain.com, email2@domain.com"
+                    value={newAddress}
+                    onChange={e => setNewAddress(e.target.value)}
+                  />
+                  <Button 
+                    type="submit" 
+                    variant="outline-primary"
+                    disabled={!validateEmails(newAddress)}
+                    style={{
+                      opacity: validateEmails(newAddress) ? 1 : 0.5,
+                      cursor: validateEmails(newAddress) ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    <PersonAddAlt1TwoToneIcon />
+                  </Button>
+                </div>
+              </form>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing.xs }}>
+                {settings.addresses.map((email, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      backgroundColor: theme.colors.dark,
+                      color: theme.colors.text,
+                      border: `1px solid ${theme.colors.primary}`,
+                      padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                      borderRadius: theme.borderRadius,
+                      fontSize: theme.fontSize.sm,
+                    }}
+                  >
+                    {email}
+                    <PersonOffTwoToneIcon
+                      style={{ 
+                        marginLeft: theme.spacing.xs, 
+                        cursor: 'pointer', 
+                        fontSize: '16px',
+                        color: theme.colors.danger
+                      }}
+                      onClick={(e) => {
+                        console.log('Icon clicked for:', email);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        deleteEmail(email);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
       case 'alerts':
         return (
           <div>
@@ -799,7 +971,10 @@ export default function Settings() {
                 <Checkbox
                   label="Disable all automated email alerts (test emails will still work)"
                   checked={emailsMuted}
-                  onChange={e => handleEmailsMutedChange(e.target.checked)}
+                  onChange={e => {
+                    setEmailsMuted(e.target.checked);
+                    window.electron.invoke('setEmailsMuted', e.target.checked);
+                  }}
                   style={{ fontWeight: 'bold' }}
                 />
                 {emailsMuted && (
@@ -818,11 +993,13 @@ export default function Settings() {
                 <div>
                   <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block' }}>Failure Threshold:</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="10"
-                      defaultValue="3"
+                    <NumberInput
+                      value={3}
+                      onChange={(value) => {
+                        // Auto-save alert rule settings would go here
+                      }}
+                      min={1}
+                      max={10}
                       style={{ width: '80px' }}
                     />
                     <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>consecutive failures</span>
@@ -832,11 +1009,13 @@ export default function Settings() {
                 <div>
                   <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block' }}>Cooldown Period:</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                    <Input
-                      type="number"
-                      min="5"
-                      max="120"
-                      defaultValue="30"
+                    <NumberInput
+                      value={30}
+                      onChange={(value) => {
+                        // Auto-save alert rule settings would go here
+                      }}
+                      min={5}
+                      max={120}
                       style={{ width: '80px' }}
                     />
                     <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>minutes</span>
@@ -854,11 +1033,13 @@ export default function Settings() {
               <div style={{ marginBottom: theme.spacing.md }}>
                 <label style={{ color: theme.colors.text, marginBottom: theme.spacing.xs, display: 'block' }}>Daily Email Limit per Device:</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="20"
-                    defaultValue="5"
+                  <NumberInput
+                    value={5}
+                    onChange={(value) => {
+                      // Auto-save alert rule settings would go here
+                    }}
+                    min={1}
+                    max={20}
                     style={{ width: '80px' }}
                   />
                   <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>emails maximum</span>
@@ -876,11 +1057,13 @@ export default function Settings() {
                   <div>
                     <label style={{ color: theme.colors.text, fontSize: theme.fontSize.sm, display: 'block' }}>Batch Threshold:</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                      <Input
-                        type="number"
-                        min="2"
-                        max="10"
-                        defaultValue="3"
+                      <NumberInput
+                        value={3}
+                        onChange={(value) => {
+                          // Auto-save alert rule settings would go here
+                        }}
+                        min={2}
+                        max={10}
                         style={{ width: '60px' }}
                       />
                       <span style={{ color: theme.colors.text, fontSize: theme.fontSize.xs }}>devices</span>
@@ -889,11 +1072,13 @@ export default function Settings() {
                   <div>
                     <label style={{ color: theme.colors.text, fontSize: theme.fontSize.sm, display: 'block' }}>Time Window:</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-                      <Input
-                        type="number"
-                        min="5"
-                        max="60"
-                        defaultValue="15"
+                      <NumberInput
+                        value={15}
+                        onChange={(value) => {
+                          // Auto-save alert rule settings would go here
+                        }}
+                        min={5}
+                        max={60}
                         style={{ width: '60px' }}
                       />
                       <span style={{ color: theme.colors.text, fontSize: theme.fontSize.xs }}>minutes</span>
@@ -921,6 +1106,7 @@ export default function Settings() {
         {[
           { id: 'general', label: 'General' },
           { id: 'email', label: 'Email Setup' },
+          { id: 'recipients', label: 'Recipients' },
           { id: 'templates', label: 'Email Templates' },
           { id: 'alerts', label: 'Alert Rules' }
         ].map(tab => (
@@ -947,8 +1133,8 @@ export default function Settings() {
       {/* Tab Content */}
       {renderTabContent()}
 
-      {/* Save Button */}
-      {activeTab !== 'templates' && (
+      {/* Save Button - Hidden since all tabs now auto-save */}
+      {false && (
         <div style={{ marginTop: theme.spacing.lg, paddingTop: theme.spacing.lg, borderTop: `1px solid ${theme.colors.primary}40` }}>
           <Button 
             variant="primary" 
@@ -963,6 +1149,27 @@ export default function Settings() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        show={!!deleteConfirmEmail}
+        onHide={() => setDeleteConfirmEmail(null)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Remove Recipient</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to remove <strong>{deleteConfirmEmail}</strong> from the recipient list?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setDeleteConfirmEmail(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteEmail}>
+            Remove
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
