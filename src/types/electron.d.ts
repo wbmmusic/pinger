@@ -10,10 +10,20 @@ export interface Device {
     lastGood?: string | null;
 }
 
+export interface SMTPConfig {
+    provider: 'gmail' | 'outlook' | 'yahoo' | 'custom';
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+}
+
 export interface EmailSettings {
     addresses: string[];
     subject: string;
     location?: string;
+    smtp?: SMTPConfig;
 }
 
 export interface UpdaterInfo {

@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import CloseIcon from "@mui/icons-material/Close";
-import Button from "@mui/material/Button";
+import { Button } from "./components/Button";
 import { UpdaterInfo } from "./types/electron";
 
 interface DownloadSnack {

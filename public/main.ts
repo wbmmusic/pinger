@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, BrowserWindowConstructorOptions } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, Menu, BrowserWindowConstructorOptions, safeStorage } from 'electron';
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 import * as fs from 'fs';
@@ -27,16 +27,28 @@ interface Device {
     trys: number;
 }
 
+interface SMTPConfig {
+    provider: 'gmail' | 'outlook' | 'yahoo' | 'custom';
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+}
+
 interface EmailSettings {
     addresses: string[];
     subject: string;
     location?: string;
+    smtp?: SMTPConfig;
+    testEmail?: string;
 }
 
 interface ConfigFile {
     devices: Device[];
     settings?: EmailSettings;
     muteCloseWarning?: boolean;
+    emailsMuted?: boolean;
 }
 
 const emptyConfig: ConfigFile = {
@@ -44,7 +56,15 @@ const emptyConfig: ConfigFile = {
     settings: {
         addresses: [],
         subject: 'Network Issues Have Been Detected',
-        location: ''
+        location: '',
+        smtp: {
+            provider: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
+            user: '',
+            pass: ''
+        }
     }
 };
 
@@ -139,9 +159,56 @@ const getDevices = (): DeviceInfo[] => {
     return theDevices;
 };
 
+const encryptSMTPCredentials = (smtp: SMTPConfig): SMTPConfig => {
+    if (!safeStorage.isEncryptionAvailable()) {
+        console.warn('Encryption not available, storing credentials in plain text');
+        return smtp;
+    }
+    
+    return {
+        ...smtp,
+        user: smtp.user ? safeStorage.encryptString(smtp.user).toString('base64') : '',
+        pass: smtp.pass ? safeStorage.encryptString(smtp.pass).toString('base64') : ''
+    };
+};
+
+const decryptSMTPCredentials = (smtp: SMTPConfig): SMTPConfig => {
+    if (!safeStorage.isEncryptionAvailable() || !smtp.user || !smtp.pass) {
+        return smtp;
+    }
+    
+    try {
+        return {
+            ...smtp,
+            user: smtp.user ? safeStorage.decryptString(Buffer.from(smtp.user, 'base64')) : '',
+            pass: smtp.pass ? safeStorage.decryptString(Buffer.from(smtp.pass, 'base64')) : ''
+        };
+    } catch (error) {
+        console.error('Failed to decrypt SMTP credentials:', error);
+        return { ...smtp, user: '', pass: '' };
+    }
+};
+
 const getFile = (): ConfigFile => JSON.parse(fs.readFileSync(pathToConfig, 'utf-8'));
 const saveFile = (fileData: ConfigFile): void => fs.writeFileSync(pathToConfig, JSON.stringify(fileData, null, '\t'));
-const makeSettings = (): EmailSettings => getFile().settings || emptyConfig.settings!;
+const makeSettings = (): EmailSettings => {
+    const settings = getFile().settings || emptyConfig.settings!;
+    // Ensure SMTP config exists
+    if (!settings.smtp) {
+        settings.smtp = {
+            provider: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
+            user: '',
+            pass: ''
+        };
+    } else {
+        // Decrypt SMTP credentials when loading
+        settings.smtp = decryptSMTPCredentials(settings.smtp);
+    }
+    return settings;
+};
 
 export const appSettings = (): EmailSettings => makeSettings();
 
@@ -263,12 +330,129 @@ const mainInit = (): void => {
     ipcMain.handle('updateSettings', (_e, newSettings: EmailSettings) => {
         console.log('Update App Settings');
         const tempFile = getFile();
+        
+        // Encrypt SMTP credentials before saving
+        if (newSettings.smtp) {
+            newSettings.smtp = encryptSMTPCredentials(newSettings.smtp);
+        }
+        
         tempFile.settings = newSettings;
         saveFile(tempFile);
         return makeSettings();
     });
 
     ipcMain.handle('getAppSettings', () => makeSettings());
+
+    ipcMain.handle('testEmail', async (_e, settings: EmailSettings) => {
+        try {
+            console.log('=== MAIN PROCESS: TEST CONNECTION START ===');
+            console.log('Testing SMTP connection for:', settings.smtp?.user);
+            
+            // Import email module dynamically to avoid circular dependency
+            const { testEmailConnection } = await import('./email');
+            const result = await testEmailConnection(settings);
+            
+            console.log('=== MAIN PROCESS: TEST CONNECTION SUCCESS ===');
+            console.log('Result:', result);
+            return result;
+        } catch (error) {
+            console.log('=== MAIN PROCESS: TEST CONNECTION ERROR ===');
+            console.error('Test connection error:', error);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('sendActualTestEmail', async (_e, settings: EmailSettings) => {
+        try {
+            console.log('=== MAIN PROCESS: SEND TEST EMAIL START ===');
+            
+            const { sendTestEmail } = await import('./email');
+            
+            // Send to testEmail address if provided, otherwise to all recipients
+            const testSettings = {
+                ...settings,
+                addresses: settings.testEmail ? [settings.testEmail] : settings.addresses
+            };
+            
+            console.log('Sending actual test email to:', testSettings.addresses);
+            const result = await sendTestEmail(testSettings);
+            console.log('=== MAIN PROCESS: SEND TEST EMAIL SUCCESS ===');
+            console.log('Result:', result);
+            return result;
+        } catch (error) {
+            console.log('=== MAIN PROCESS: SEND TEST EMAIL ERROR ===');
+            console.error('Send test email error:', error);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('sendTestEmail', async () => {
+        try {
+            const settings = makeSettings();
+            const { sendTestEmail } = await import('./email');
+            return await sendTestEmail(settings);
+        } catch (error) {
+            console.error('Send test email error:', error);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('sendSimulatedAlert', async (_e, settings: EmailSettings) => {
+        try {
+            console.log('=== MAIN PROCESS: SEND SIMULATED ALERT START ===');
+            
+            const { sendEmail } = await import('./email');
+            
+            // Modify settings to send to testEmail address instead of all recipients
+            const alertSettings = {
+                ...settings,
+                addresses: settings.testEmail ? [settings.testEmail] : settings.addresses
+            };
+            
+            console.log('Sending simulated alert to:', alertSettings.addresses);
+            
+            // Use the actual email template by triggering the email body generation
+            const result = await sendEmail(() => {
+                win.webContents.send('makeEmailBody');
+            });
+            
+            console.log('=== MAIN PROCESS: SEND SIMULATED ALERT SUCCESS ===');
+            console.log('Result:', result);
+            return `Simulated network alert sent: ${result.messageId}`;
+        } catch (error) {
+            console.log('=== MAIN PROCESS: SEND SIMULATED ALERT ERROR ===');
+            console.error('Send simulated alert error:', error);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('sendTemplateTest', async (_e, settings: EmailSettings & { templateType: string }) => {
+        try {
+            console.log('=== MAIN PROCESS: SEND TEMPLATE TEST START ===');
+            console.log('Template type:', settings.templateType);
+            
+            const { sendTemplateTestEmail } = await import('./email');
+            const result = await sendTemplateTestEmail(settings);
+            
+            console.log('=== MAIN PROCESS: SEND TEMPLATE TEST SUCCESS ===');
+            console.log('Result:', result);
+            return result;
+        } catch (error) {
+            console.log('=== MAIN PROCESS: SEND TEMPLATE TEST ERROR ===');
+            console.error('Send template test error:', error);
+            throw error;
+        }
+    });
+
+    ipcMain.handle('generatePreviewHtml', async (_e, type: 'device-down' | 'device-recovery' | 'escalation', location: string) => {
+        try {
+            const { generatePreviewHtml } = await import('./email');
+            return generatePreviewHtml(type, location);
+        } catch (error) {
+            console.error('Generate preview HTML error:', error);
+            throw error;
+        }
+    });
 
     const pingOne = (host: DeviceInfo): void => {
         const tmrIdx = xyz.findIndex(tmr => tmr.id === host.id);
@@ -291,6 +475,15 @@ const mainInit = (): void => {
     });
 
     ipcMain.handle('getCloseWindowWarningMute', () => getFile().muteCloseWarning);
+
+    ipcMain.handle('getEmailsMuted', () => getFile().emailsMuted || false);
+
+    ipcMain.handle('setEmailsMuted', (_e, val: boolean) => {
+        const tempFile = getFile();
+        tempFile.emailsMuted = val;
+        saveFile(tempFile);
+        return val;
+    });
 
     ipcMain.handle('exitApp', () => app.exit());
 

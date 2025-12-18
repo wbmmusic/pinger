@@ -4,8 +4,11 @@ import Top from "./components/Top";
 import Email from "./Email";
 import Updates from "./Updates";
 import * as ReactDOMServer from "react-dom/server";
+import { ThemeProvider, useTheme } from "./theme/ThemeProvider";
 
-function App() {
+function AppContent() {
+  const theme = useTheme();
+
   useEffect(() => {
     window.electron.receive("message", (theMessage: any) => console.log(theMessage));
 
@@ -36,6 +39,9 @@ function App() {
         maxWidth: "100vw",
         maxHeight: "100vh",
         overflow: "hidden",
+        background: theme.colors.background,
+        color: theme.colors.text,
+        fontFamily: theme.fonts.primary,
       }}
     >
       <HashRouter>
@@ -43,6 +49,14 @@ function App() {
       </HashRouter>
       <Updates />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

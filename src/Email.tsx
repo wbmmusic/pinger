@@ -1,40 +1,48 @@
+import { useEffect, useState } from 'react';
+import EmailTemplate from './EmailTemplate_mobile';
+
 export default function Email() {
+    const [location, setLocation] = useState('Unknown Location');
+    const [emailType, setEmailType] = useState<'device-down' | 'device-recovery' | 'escalation'>('device-down');
+
+    useEffect(() => {
+        window.electron
+            .invoke('getAppSettings')
+            .then((settings: any) => {
+                if (settings.location) {
+                    setLocation(settings.location);
+                }
+            })
+            .catch((err: any) => console.error(err));
+    }, []);
+
+    // Sample data for preview
+    const sampleDevices = [
+        {
+            id: '1',
+            name: 'Main Router',
+            address: '192.168.1.1',
+            status: 'DEAD',
+            lastChecked: new Date().toLocaleString(),
+            lastGood: '12/18/2025 08:30:15 AM'
+        },
+        {
+            id: '2', 
+            name: 'Server-01',
+            address: '192.168.1.100',
+            status: 'DEAD',
+            lastChecked: new Date().toLocaleString(),
+            lastGood: '12/18/2025 08:28:42 AM'
+        }
+    ];
+
     return (
-        <div style={{ backgroundColor: 'lightGrey' }}>
-            <div style={{ padding: '10px', display: 'inline-block' }}>
-                <div>
-                    <h1>Network Warning</h1>
-                </div>
-                <hr />
-                <div style={{ marginBottom: '10px' }}>
-                    <b>System:</b>{` Temp System Name`}
-                </div>
-                <div>
-                    Device/s you are pinging stopped responding
-                </div>
-                <div style={{ marginTop: '10px' }}>
-                    <div style={{ display: 'inline-block', backgroundColor: 'white', padding: '10px' }}>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'left' }}>Name</th>
-                                    <th style={{ textAlign: 'left' }}>IP</th>
-                                    <th style={{ textAlign: 'left' }}>Last good ping</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style={{ paddingRight: '20px' }}>Test Name</td>
-                                    <td style={{ paddingRight: '20px' }}>123.123.234.456</td>
-                                    <td style={{ paddingRight: '20px' }}>Some Date</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <hr />
-                Some other information can go here
-            </div>
-        </div>
+        <EmailTemplate
+            type={emailType}
+            devices={sampleDevices.slice(0, 1)} // Just first device as trigger
+            allAffectedDevices={sampleDevices} // All devices for context
+            location={location}
+            timestamp={new Date()}
+        />
     );
 }

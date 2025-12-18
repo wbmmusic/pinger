@@ -54,22 +54,37 @@ export class Pingable {
             this.ping();
         }, this.frequency * 1000);
 
-        ping.sys.probe(this.address, (isAlive: boolean | null, _error?: unknown) => {
-            const rightNow = new Date();
-            const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
+        ping.promise.probe(this.address, { timeout: 5 })
+            .then((res) => {
+                const rightNow = new Date();
+                const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
 
-            if (isAlive) {
-                this.lastGood = now;
-                this.lastChecked = now;
-                this.status = 'ALIVE';
-                this.misses = 0;
-                this.updateDevice(this.name);
+                if (res.alive) {
+                    this.lastGood = now;
+                    this.lastChecked = now;
+                    this.status = 'ALIVE';
+                    this.misses = 0;
+                    this.updateDevice(this.name);
 
-                if (this.alarm === true) {
-                    this.alarm = false;
-                    console.log('Send Restored Email here');
+                    if (this.alarm === true) {
+                        this.alarm = false;
+                        console.log('Send Restored Email here');
+                    }
+                } else {
+                    this.lastChecked = now;
+                    this.status = 'DEAD';
+                    this.misses = this.misses + 1;
+                    this.updateDevice(this.name);
+
+                    if (this.misses === this.trys) {
+                        console.log('Send Error Email Here');
+                    }
                 }
-            } else {
+            })
+            .catch((error) => {
+                const rightNow = new Date();
+                const now = date.format(rightNow, 'MM/DD/YYYY hh:mm:ss A');
+                
                 this.lastChecked = now;
                 this.status = 'DEAD';
                 this.misses = this.misses + 1;
@@ -78,8 +93,7 @@ export class Pingable {
                 if (this.misses === this.trys) {
                     console.log('Send Error Email Here');
                 }
-            }
-        });
+            });
     };
 
     clearTimer = (): void => {

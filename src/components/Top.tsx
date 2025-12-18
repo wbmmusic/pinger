@@ -1,22 +1,25 @@
 import React, { useState, Fragment, useEffect } from "react";
-import {
-  Button,
-  Form,
-  FormControl,
-  InputGroup,
-  Modal,
-  Nav,
-  Navbar,
-  NavDropdown,
-  Table,
-} from "react-bootstrap";
+import { Button } from "./Button";
+import { Modal } from "./Modal";
+import { Input } from "./Input";
+import { Textarea } from "./Textarea";
+import { Table } from "./Table";
+import { IconButton } from "./IconButton";
+import { Tooltip } from "./Tooltip";
+import { Form } from "./Form";
+import Settings from "./Settings";
+import { useTheme } from "../theme/ThemeProvider";
 import Email from "../Email";
 import StatusTable from "./StatusTable";
 import PersonAddAlt1TwoToneIcon from "@mui/icons-material/PersonAddAlt1TwoTone";
 import PersonOffTwoToneIcon from "@mui/icons-material/PersonOffTwoTone";
-import CheckTwoToneIcon from "@mui/icons-material/CheckTwoTone";
-import { Route, Routes, useNavigate } from "react-router-dom";
-import { EmailSettings } from "../types/electron";
+import SettingsIcon from "@mui/icons-material/Settings";
+import AddIcon from "@mui/icons-material/Add";
+import NetworkPingIcon from "@mui/icons-material/NetworkPing";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import RadarIcon from "@mui/icons-material/Radar";
+import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
+import { EmailSettings, SMTPConfig } from "../types/electron";
 
 interface NewDeviceModal {
   show: boolean;
@@ -38,6 +41,8 @@ interface CloseWindowModal {
 
 export default function Top() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
   const defaultNewDeviceModal: NewDeviceModal = {
     show: false,
     name: "",
@@ -48,22 +53,33 @@ export default function Top() {
   };
   const defaultGeneralSettingsModal: GeneralSettingsModal = {
     show: false,
-    settings: { addresses: [], subject: "", location: "" },
+    settings: { 
+      addresses: [], 
+      subject: "", 
+      location: "",
+      smtp: {
+        provider: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        user: '',
+        pass: ''
+      }
+    },
   };
   const [newDeviceModal, setNewDeviceModal] = useState<NewDeviceModal>(defaultNewDeviceModal);
-  const [generalSettingsModal, setGeneralSettingsModal] = useState<GeneralSettingsModal>(
-    defaultGeneralSettingsModal
-  );
-  const [ogSettings, setogSettings] = useState<EmailSettings | null>(null);
-  const [newAddress, setNewAddress] = useState<string>("");
-  const [autoLaunch, setAutoLaunch] = useState<boolean>(false);
+  const [devices, setDevices] = useState<any[]>([]);
   const [closeWindowModal, setCloseWindowModal] = useState<CloseWindowModal>({ show: false });
   const [muteCloseWin, setMuteCloseWin] = useState<boolean>(false);
 
   const hideNewDeviceModal = () => setNewDeviceModal(defaultNewDeviceModal);
-  const closeGeneralSettingsModal = () =>
-    setGeneralSettingsModal(defaultGeneralSettingsModal);
-  const sendTest = () => console.log("Send Test Email");
+
+  const sendTest = () => {
+    window.electron
+      .invoke('sendTestEmail')
+      .then((res: string) => console.log('Test email sent:', res))
+      .catch((err: any) => console.error('Test email failed:', err));
+  };
 
   const createDevice = () => {
     window.electron.send("newDevice", newDeviceModal);
@@ -77,209 +93,78 @@ export default function Top() {
       .catch((err: any) => console.error(err));
   };
 
-  const isSavable = (): boolean => {
-    if (
-      JSON.stringify(ogSettings) !==
-      JSON.stringify(generalSettingsModal.settings)
-    )
-      return true;
-    return false;
-  };
-
-  const emailSettings = () => {
-    setGeneralSettingsModal(old => ({
-      ...old,
-      save: false,
-      show: false,
-      processing: true,
-    }));
-    window.electron
-      .invoke("getAppSettings")
-      .then((res: EmailSettings) => {
-        setGeneralSettingsModal({ show: true, settings: { ...res } });
-        setogSettings(JSON.parse(JSON.stringify(res)));
-      })
-      .catch((err: any) => console.error(err));
-  };
-
-  const deleteEmail = (addy: string) => {
-    setGeneralSettingsModal(old => ({
-      ...old,
-      settings: {
-        ...old.settings,
-        addresses: old.settings.addresses.filter(address => address !== addy),
-      },
-    }));
-  };
-
-  const updateGeneralSettings = () => {
-    window.electron
-      .invoke("updateSettings", generalSettingsModal.settings)
-      .then((_res: EmailSettings) => closeGeneralSettingsModal())
-      .catch((err: any) => console.error(err));
-  };
-
-  const makeLaunch = () => {
-    window.electron
-      .invoke("getAutoLaunchSetting")
-      .then((res: boolean) => setAutoLaunch(res))
-      .catch((err: any) => console.error(err));
-  };
-
   useEffect(() => {
-    makeLaunch();
     window.electron
       .invoke("getCloseWindowWarningMute")
       .then((res: boolean) => setMuteCloseWin(res))
       .catch((err: any) => console.error(err));
+    window.electron
+      .invoke("getDevices")
+      .then((res: any[]) => setDevices(res))
+      .catch((err: any) => console.error(err));
     window.electron.receive("showCloseWarning", () =>
       setCloseWindowModal({ show: true })
     );
-    return () => window.electron.removeListener("showCloseWarning");
+    window.electron.receive("devices", (devs: any[]) => setDevices(devs));
+    return () => {
+      window.electron.removeListener("showCloseWarning");
+      window.electron.removeListener("devices");
+    };
   }, []);
 
-  const makeSettingsModal = (): React.ReactElement | null => {
-    if (generalSettingsModal.show) {
-      return (
-        <Modal
-          show={generalSettingsModal.show}
-          onHide={closeGeneralSettingsModal}
-          backdrop="static"
-          keyboard={false}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>General Settings</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div>
-              <b>Location</b>
-            </div>
-            <FormControl
-              size="sm"
-              placeholder="Enter a descriptive location name"
-              aria-label="Enter a descriptive location name"
-              aria-describedby="basic-addon2"
-              type="text"
-              onChange={e =>
-                setGeneralSettingsModal(old => ({
-                  ...old,
-                  settings: { ...old.settings, location: e.target.value },
-                }))
-              }
-              value={generalSettingsModal.settings.location}
-            />
-            <hr />
-            <div>
-              <b>Email Subject</b>
-            </div>
-            <FormControl
-              size="sm"
-              placeholder="ie. Network Error Detected"
-              aria-label="ie. Network Error Detected"
-              aria-describedby="basic-addon2"
-              type="text"
-              onChange={e =>
-                setGeneralSettingsModal(old => ({
-                  ...old,
-                  settings: { ...old.settings, subject: e.target.value },
-                }))
-              }
-              value={generalSettingsModal.settings.subject}
-            />
-            <hr />
-            <div>
-              <b>Send To</b>
-            </div>
-            <div>
-              <Form
-                onSubmit={e => {
-                  e.preventDefault();
-                  setGeneralSettingsModal(old => ({
-                    ...old,
-                    settings: {
-                      ...old.settings,
-                      addresses: [...old.settings.addresses, newAddress],
-                    },
-                  }));
-                  setNewAddress("");
-                }}
-              >
-                <InputGroup className="mb-3">
-                  <FormControl
-                    size="sm"
-                    placeholder="example@example.com"
-                    aria-label="Add Recipient Email"
-                    aria-describedby="basic-addon2"
-                    type="email"
-                    onChange={e => setNewAddress(e.target.value)}
-                    value={newAddress}
-                  />
-                  <Button size="sm" type="submit" variant="outline-primary">
-                    <PersonAddAlt1TwoToneIcon />
-                  </Button>
-                </InputGroup>
-              </Form>
-            </div>
-            <div>
-              {generalSettingsModal.settings.addresses.map((usr, i) => (
-                <div
-                  key={`emailAddress ${i}`}
-                  style={{
-                    display: "inline-block",
-                    marginRight: "3px",
-                    marginBottom: "1px",
-                    userSelect: "none",
-                    backgroundColor: "lightgray",
-                    padding: "4px",
-                    borderRadius: "2px",
-                  }}
-                >
-                  <div
-                    key={"User" + i}
-                    style={{
-                      display: "flex",
-                      fontSize: "12px",
-                      alignItems: "center",
-                    }}
-                  >
-                    {usr}
-                    <div
-                      style={{
-                        display: "inline-block",
-                        fontSize: "10px",
-                        marginLeft: "4px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => deleteEmail(usr)}
-                    >
-                      <PersonOffTwoToneIcon style={{ fontSize: "16px" }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={closeGeneralSettingsModal}
-            >
-              Close
-            </Button>
-            <Button
-              disabled={!isSavable()}
-              size="sm"
-              variant="primary"
-              onClick={updateGeneralSettings}
-            >
-              Save Settings
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      );
+
+
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!newDeviceModal.name.trim()) {
+      errors.name = 'Device name is required';
+    } else if (devices.some(device => device.name.toLowerCase() === newDeviceModal.name.trim().toLowerCase())) {
+      errors.name = 'Device name already exists';
     }
-    return null;
+    
+    if (!newDeviceModal.address.trim()) {
+      errors.address = 'IP address or hostname is required';
+    } else {
+      // Check for duplicate address
+      if (devices.some(device => device.address.toLowerCase() === newDeviceModal.address.trim().toLowerCase())) {
+        errors.address = 'IP address or hostname already exists';
+      } else {
+        // Basic IP validation
+        const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const hostnameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?([.][a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+        
+        if (!ipRegex.test(newDeviceModal.address) && !hostnameRegex.test(newDeviceModal.address)) {
+          errors.address = 'Enter a valid IP address or hostname';
+        }
+      }
+    }
+    
+    if (newDeviceModal.frequency < 15 || newDeviceModal.frequency > 720) {
+      errors.frequency = 'Frequency must be between 15-720 seconds';
+    }
+    
+    if (newDeviceModal.trys < 1 || newDeviceModal.trys > 100) {
+      errors.trys = 'Tries must be between 1-100';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateDevice = () => {
+    if (validateForm()) {
+      createDevice();
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleCreateDevice();
+    }
   };
 
   const makeNewDeviceModal = (): React.ReactElement | null => {
@@ -295,102 +180,239 @@ export default function Top() {
             <Modal.Title>Add New Device</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Table borderless size="sm" style={{ width: "100%" }}>
-              <tbody>
-                <tr>
-                  <td style={{ textAlign: "right" }}>Name:</td>
-                  <td style={{ width: "100%" }}>
-                    <input
-                      style={{ width: "100%" }}
-                      type="text"
-                      value={newDeviceModal.name}
-                      onChange={e =>
-                        setNewDeviceModal(old => ({
-                          ...old,
-                          name: e.target.value,
-                        }))
+            <Form onKeyPress={handleKeyPress}>
+              {/* Device Information Section */}
+              <div style={{ marginBottom: theme.spacing.lg }}>
+                <h4 style={{ 
+                  color: theme.colors.primary, 
+                  fontSize: theme.fontSize.md, 
+                  marginBottom: theme.spacing.md,
+                  fontFamily: theme.fonts.display,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}>
+                  Device Information
+                </h4>
+                
+                <div style={{ marginBottom: theme.spacing.md }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: theme.spacing.xs, 
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize.sm,
+                    fontWeight: 'bold'
+                  }}>
+                    Device Name *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., Main Router, Server-01"
+                    value={newDeviceModal.name}
+                    onChange={e => {
+                      setNewDeviceModal(old => ({ ...old, name: e.target.value }));
+                      if (validationErrors.name) {
+                        setValidationErrors(prev => ({ ...prev, name: '' }));
                       }
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "right" }}>Address:</td>
-                  <td>
-                    <input
-                      style={{ width: "100%" }}
-                      type="text"
-                      value={newDeviceModal.address}
-                      onChange={e =>
-                        setNewDeviceModal(old => ({
-                          ...old,
-                          address: e.target.value,
-                        }))
+                    }}
+                    style={{
+                      borderColor: validationErrors.name ? theme.colors.danger : theme.colors.primary,
+                      transition: 'all 0.3s ease',
+                      ...(validationErrors.name && { boxShadow: `0 0 8px ${theme.colors.danger}40` })
+                    }}
+                    autoFocus
+                  />
+                  {validationErrors.name && (
+                    <div style={{ 
+                      color: theme.colors.danger, 
+                      fontSize: theme.fontSize.sm, 
+                      marginTop: theme.spacing.xs,
+                      animation: 'fadeIn 0.3s ease'
+                    }}>
+                      {validationErrors.name}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: theme.spacing.md }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: theme.spacing.xs, 
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize.sm,
+                    fontWeight: 'bold'
+                  }}>
+                    IP Address / Hostname *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="192.168.1.1 or google.com"
+                    value={newDeviceModal.address}
+                    onChange={e => {
+                      setNewDeviceModal(old => ({ ...old, address: e.target.value }));
+                      if (validationErrors.address) {
+                        setValidationErrors(prev => ({ ...prev, address: '' }));
                       }
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "right" }}>Notes:</td>
-                  <td>
-                    <textarea
-                      style={{ width: "100%", fontSize: "12px" }}
-                      value={newDeviceModal.notes}
-                      onChange={e =>
-                        setNewDeviceModal(old => ({
-                          ...old,
-                          notes: e.target.value,
-                        }))
-                      }
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    Ping Frequency:
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min="15"
-                      max="720"
-                      value={newDeviceModal.frequency}
-                      onChange={e =>
-                        setNewDeviceModal(old => ({
-                          ...old,
-                          frequency: parseFloat(e.target.value),
-                        }))
-                      }
-                    />
-                    {" Seconds"}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    Trys Before Email:
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={newDeviceModal.trys}
-                      onChange={e =>
-                        setNewDeviceModal(old => ({
-                          ...old,
-                          trys: parseInt(e.target.value),
-                        }))
-                      }
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
+                    }}
+                    style={{
+                      borderColor: validationErrors.address ? theme.colors.danger : theme.colors.primary,
+                      transition: 'all 0.3s ease',
+                      ...(validationErrors.address && { boxShadow: `0 0 8px ${theme.colors.danger}40` })
+                    }}
+                  />
+                  {validationErrors.address && (
+                    <div style={{ 
+                      color: theme.colors.danger, 
+                      fontSize: theme.fontSize.sm, 
+                      marginTop: theme.spacing.xs,
+                      animation: 'fadeIn 0.3s ease'
+                    }}>
+                      {validationErrors.address}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: theme.spacing.md }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: theme.spacing.xs, 
+                    color: theme.colors.text,
+                    fontSize: theme.fontSize.sm,
+                    fontWeight: 'bold'
+                  }}>
+                    Notes (Optional)
+                  </label>
+                  <Textarea
+                    placeholder="Additional information about this device..."
+                    value={newDeviceModal.notes}
+                    onChange={e =>
+                      setNewDeviceModal(old => ({ ...old, notes: e.target.value }))
+                    }
+                    style={{ minHeight: '60px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Ping Configuration Section */}
+              <div style={{ marginBottom: theme.spacing.lg }}>
+                <h4 style={{ 
+                  color: theme.colors.secondary, 
+                  fontSize: theme.fontSize.md, 
+                  marginBottom: theme.spacing.md,
+                  fontFamily: theme.fonts.display,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}>
+                  Ping Configuration
+                </h4>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.md }}>
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: theme.spacing.xs, 
+                      color: theme.colors.text,
+                      fontSize: theme.fontSize.sm,
+                      fontWeight: 'bold'
+                    }}>
+                      Ping Frequency
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                      <Input
+                        type="number"
+                        min="15"
+                        max="720"
+                        value={newDeviceModal.frequency}
+                        onChange={e => {
+                          setNewDeviceModal(old => ({ ...old, frequency: parseFloat(e.target.value) || 15 }));
+                          if (validationErrors.frequency) {
+                            setValidationErrors(prev => ({ ...prev, frequency: '' }));
+                          }
+                        }}
+                        style={{
+                          width: '80px',
+                          borderColor: validationErrors.frequency ? theme.colors.danger : theme.colors.primary,
+                          transition: 'all 0.3s ease'
+                        }}
+                      />
+                      <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>seconds</span>
+                    </div>
+                    {validationErrors.frequency && (
+                      <div style={{ 
+                        color: theme.colors.danger, 
+                        fontSize: theme.fontSize.sm, 
+                        marginTop: theme.spacing.xs
+                      }}>
+                        {validationErrors.frequency}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: theme.spacing.xs, 
+                      color: theme.colors.text,
+                      fontSize: theme.fontSize.sm,
+                      fontWeight: 'bold'
+                    }}>
+                      Retry Attempts
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={newDeviceModal.trys}
+                        onChange={e => {
+                          setNewDeviceModal(old => ({ ...old, trys: parseInt(e.target.value) || 1 }));
+                          if (validationErrors.trys) {
+                            setValidationErrors(prev => ({ ...prev, trys: '' }));
+                          }
+                        }}
+                        style={{
+                          width: '80px',
+                          borderColor: validationErrors.trys ? theme.colors.danger : theme.colors.primary,
+                          transition: 'all 0.3s ease'
+                        }}
+                      />
+                      <span style={{ color: theme.colors.text, fontSize: theme.fontSize.sm }}>tries</span>
+                    </div>
+                    {validationErrors.trys && (
+                      <div style={{ 
+                        color: theme.colors.danger, 
+                        fontSize: theme.fontSize.sm, 
+                        marginTop: theme.spacing.xs
+                      }}>
+                        {validationErrors.trys}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button size="sm" variant="secondary" onClick={hideNewDeviceModal}>
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              onClick={hideNewDeviceModal}
+              style={{ marginRight: theme.spacing.sm }}
+            >
               Cancel
             </Button>
-            <Button size="sm" variant="primary" onClick={() => createDevice()}>
+            <Button 
+              size="sm" 
+              variant="primary" 
+              onClick={handleCreateDevice}
+              disabled={Object.keys(validationErrors).length > 0 || !newDeviceModal.name.trim() || !newDeviceModal.address.trim()}
+              style={{
+                background: Object.keys(validationErrors).length > 0 || !newDeviceModal.name.trim() || !newDeviceModal.address.trim() ? theme.colors.muted : 'yellow',
+                border: 'none',
+                boxShadow: `0 0 15px ${theme.colors.primary}40`,
+                opacity: Object.keys(validationErrors).length > 0 || !newDeviceModal.name.trim() || !newDeviceModal.address.trim() ? 0.5 : 1,
+                cursor: Object.keys(validationErrors).length > 0 || !newDeviceModal.name.trim() || !newDeviceModal.address.trim() ? 'not-allowed' : 'pointer'
+              }}
+            >
               Add Device
             </Button>
           </Modal.Footer>
@@ -468,89 +490,65 @@ export default function Top() {
     return null;
   };
 
-  const makeAutoRunMenu = () => {
-    if (autoLaunch)
-      return (
-        <NavDropdown.Item
-          onClick={() => {
-            window.electron
-              .invoke("disableAutoLaunch")
-              .then((res: boolean) => setAutoLaunch(res))
-              .catch((err: any) => console.error(err));
-          }}
-        >
-          Autostart <CheckTwoToneIcon />
-        </NavDropdown.Item>
-      );
-    return (
-      <NavDropdown.Item
-        onClick={() => {
-          window.electron
-            .invoke("enableAutoLaunch")
-            .then((res: boolean) => setAutoLaunch(res))
-            .catch((err: any) => console.error(err));
-        }}
-      >
-        Autostart
-      </NavDropdown.Item>
-    );
-  };
+
 
   return (
     <Fragment>
-      <div style={{ borderTop: "1px solid lightGrey" }}>
-        <Navbar bg="light" expand="sm">
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="mr-auto">
-              <NavDropdown title="Settings" id="basic-nav-dropdown">
-                <NavDropdown.Item onClick={emailSettings}>
-                  General
-                </NavDropdown.Item>
-                {makeAutoRunMenu()}
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={() => navigate("/email")}>
-                  Preview Email
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={sendTest}>
-                  Send Test Email
-                </NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={() => navigate("/")}>
-                  Home
-                </NavDropdown.Item>
-              </NavDropdown>
-              <NavDropdown title="Devices" id="basic-nav-dropdown">
-                <NavDropdown.Item onClick={pingAll}>Ping All</NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item
-                  onClick={() =>
-                    setNewDeviceModal({ ...defaultNewDeviceModal, show: true })
-                  }
-                >
-                  Add Device
-                </NavDropdown.Item>
-              </NavDropdown>
-            </Nav>
-          </Navbar.Collapse>
-        </Navbar>
+      <div style={{ 
+        borderBottom: `3px solid ${theme.colors.primary}`, 
+        background: `linear-gradient(90deg, ${theme.colors.dark} 0%, ${theme.colors.light} 50%, ${theme.colors.dark} 100%)`,
+        padding: "6px", 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        boxShadow: `0 2px 15px rgba(0, 212, 255, 0.3)`
+      }}>
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          {location.pathname !== '/settings' && (
+            <>
+              <Tooltip text="Add Device">
+                <IconButton onClick={() => setNewDeviceModal({ ...defaultNewDeviceModal, show: true })}>
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip text="Ping All Devices">
+                <IconButton onClick={pingAll}>
+                  <TrackChangesIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </div>
+        {location.pathname === '/settings' ? (
+          <Tooltip text="Home">
+            <IconButton onClick={() => navigate('/')}>
+              <RadarIcon />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Tooltip text="Settings">
+            <IconButton onClick={() => navigate('/settings')}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </div>
       <div style={{ height: "100%", overflowY: "auto" }}>
         <Routes>
           <Route path="/email" element={<Email />} />
+          <Route path="/settings" element={<Settings />} />
           <Route
             path="*"
             element={
               <div>
                 <StatusTable />
                 {makeNewDeviceModal()}
-                {makeSettingsModal()}
-                {makeCloseWindowModal()}
               </div>
             }
           />
         </Routes>
       </div>
+      {makeCloseWindowModal()}
     </Fragment>
   );
 }
